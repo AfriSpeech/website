@@ -1,0 +1,39 @@
+---
+interface Props {
+  name: string;
+  description: string;
+  downloads: number;
+  language: string;
+  href: string;
+  tags?: string[];
+}
+
+const { name, description, downloads, language, href, tags = [] } = Astro.props;
+---
+
+<div class="group p-6 rounded-card border border-savanna-200 bg-ivory hover:shadow-card-hover hover:border-gold-200 transition-all" data-repo={name}>
+  <div class="flex items-start justify-between mb-2">
+    <h3 class="text-lg font-bold text-earth-700 group-hover:text-gold transition-colors">{name}</h3>
+    <div class="flex items-center gap-1 text-sm text-baobab shrink-0 ml-3" title="Repository downloads (clones) in the last 14 days">
+      <svg class="w-4 h-4 text-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+      <span class="download-count">{downloads.toLocaleString()}</span>
+    </div>
+  </div>
+  <p class="text-base text-baobab leading-relaxed mb-3">{description}</p>
+  <div class="flex items-center gap-3 text-sm text-baobab mb-3">
+    <span class="flex items-center gap-1.5">
+      <span class="w-2.5 h-2.5 rounded-full bg-kente-green"></span>
+      {language}
+    </span>
+  </div>
+  {tags.length > 0 && (
+    <div class="flex flex-wrap gap-2 mb-4">
+      {tags.map(tag => (
+        <span class="text-sm px-3 py-1 rounded-card bg-gold-50 text-gold font-semibold">{tag}</span>
+      ))}
+    </div>
+  )}
+  <a href={href} target="_blank" rel="noopener" class="text-base font-bold text-gold hover:text-gold-600">
+    View Repository &rarr;
+  </a>
+</div>

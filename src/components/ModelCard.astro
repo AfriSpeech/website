@@ -1,0 +1,41 @@
+---
+interface Props {
+  name: string;
+  description: string;
+  languages: string;
+  tags: string[];
+  href: string;
+  demoHref?: string;
+  downloads?: string;
+}
+
+const { name, description, languages, tags, href, demoHref, downloads } = Astro.props;
+---
+
+<div class="group p-8 rounded-card border border-savanna-200 bg-ivory hover:shadow-card-hover hover:border-gold-200 transition-all">
+  <div class="flex items-start justify-between mb-3">
+    <div>
+      <h3 class="text-xl font-bold text-earth-700 group-hover:text-gold transition-colors">{name}</h3>
+      <p class="text-base text-gold font-semibold mt-1">{languages}</p>
+    </div>
+    {downloads && (
+      <span class="text-sm text-baobab bg-savanna px-3 py-1 rounded-card">{downloads}</span>
+    )}
+  </div>
+  <p class="text-base text-baobab leading-relaxed mb-5">{description}</p>
+  <div class="flex flex-wrap gap-2 mb-5">
+    {tags.map(tag => (
+      <span class="text-sm px-3 py-1 rounded-card bg-gold-50 text-gold font-semibold">{tag}</span>
+    ))}
+  </div>
+  <div class="flex gap-4">
+    <a href={href} target="_blank" rel="noopener" class="text-base font-bold text-gold hover:text-gold-600">
+      View on HuggingFace &rarr;
+    </a>
+    {demoHref && (
+      <a href={demoHref} class="text-base font-bold text-baobab hover:text-earth-600">
+        Try Demo &rarr;
+      </a>
+    )}
+  </div>
+</div>

@@ -1,0 +1,154 @@
+---
+import Base from '../layouts/Base.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { getDownloadsByRepo } from '../lib/github-traffic.mjs';
+
+const projects = [
+  {
+    name: 'african-speech-id',
+    description: 'CPU-friendly, fast language identification for 1,386 African languages.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/african-speech-id',
+    tags: ['Language ID', 'Speech', 'CPU'],
+  },
+  {
+    name: 'africa-g2p',
+    description: 'Rule-based grapheme-to-phoneme (G2P) for 400+ African languages — convert text to native-orthography phonemes or IPA, with romanisation for non-Latin scripts.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/africa-g2p',
+    tags: ['G2P', 'Phonemes', 'IPA', 'TTS'],
+  },
+  {
+    name: 'africa-corpus-builder',
+    description: 'Get access to monolingual and parallel data for 693 African languages.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/africa-corpus-builder',
+    tags: ['Corpus', 'Data', 'Parallel Text'],
+  },
+  {
+    name: 'afrispeech-selector',
+    description: 'Easy access to speech data across 142 African languages for training TTS and ASR models.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/afrispeech-selector',
+    tags: ['Speech', 'ASR', 'TTS', 'Data'],
+  },
+  {
+    name: 'awesome-africa-nlp',
+    description: 'A curated list of awesome open-source projects made by African developers.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/awesome-africa-nlp',
+    tags: ['Resources', 'NLP', 'List'],
+  },
+  {
+    name: 'afriso',
+    description: 'Curated list of languages spoken in Africa, with ISO codes and metadata.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/afriso',
+    tags: ['Languages', 'ISO Codes', 'Reference'],
+  },
+  {
+    name: 'african-nlp-communities',
+    description: 'Index of NLP communities and organizations working on African languages.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/african-nlp-communities',
+    tags: ['Community', 'Resources', 'List'],
+  },
+  {
+    name: 'afrispeech-datagen',
+    description: 'Generate high quality synthetic TTS training audio from text datasets.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/afrispeech-datagen',
+    tags: ['TTS', 'Synthetic Data', 'Voice Cloning'],
+  },
+  {
+    name: 'afrispeech-ipa-trainer',
+    description: 'AfriSpeech audio paired with IPA phoneme transcriptions for 141 African languages, plus the CTC phoneme recogniser trained on it.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/afrispeech-ipa-trainer',
+    tags: ['IPA', 'Phonemes', 'CTC', 'ASR'],
+  },
+  {
+    name: 'akiti-tts',
+    description: 'Natural sounding, CPU-friendly voices for African languages.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/akiti-tts',
+    tags: ['TTS', 'Voices', 'CPU'],
+  },
+  {
+    name: 'africa-mt-builder',
+    description: 'Automated scraper that builds African-language Bible parallel text datasets from YouVersion — 1,090 versions, 792 languages, with English/French/Arabic/Chinese/Portuguese pivots.',
+    language: 'Python',
+    href: 'https://github.com/AfriSpeech/africa-mt-builder',
+    tags: ['MT', 'Parallel Text', 'Data'],
+  },
+  {
+    name: 'kasanoma',
+    description: 'Experiments and notebooks for African language speech and text processing.',
+    language: 'Jupyter Notebook',
+    href: 'https://github.com/AfriSpeech/kasanoma',
+    tags: ['Research', 'Notebooks'],
+  },
+];
+
+const downloadsByRepo = await getDownloadsByRepo();
+const projectsWithDownloads = projects
+  .map(project => ({ ...project, downloads: downloadsByRepo[project.name] ?? 0 }))
+  .sort((a, b) => b.downloads - a.downloads);
+---
+
+<Base title="Projects" description="Open-source NLP projects for African languages. All code is on GitHub.">
+  <Navigation slot="nav" />
+
+  <section class="pt-32 pb-16 sm:pt-40 sm:pb-20 bg-savanna">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <h1 class="text-3xl sm:text-4xl font-bold text-earth-800 mb-4">Projects</h1>
+        <p class="text-lg text-baobab leading-relaxed">
+          Tools built by the community, for the community. All code is open-source on GitHub.
+        </p>
+        <p class="text-base text-baobab mt-3">
+          Download counts are cumulative repository clones, tracked daily from GitHub.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 sm:py-20 bg-ivory">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {projectsWithDownloads.map(project => (
+          <ProjectCard {...project} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 sm:py-20 bg-savanna">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h2 class="text-2xl font-bold text-earth-800 mb-4">All Projects on GitHub</h2>
+      <p class="text-baobab mb-6 max-w-lg mx-auto text-base">
+        Browse all AfriSpeech repositories directly on GitHub.
+      </p>
+      <a href="https://github.com/AfriSpeech" target="_blank" rel="noopener" class="inline-flex items-center px-8 py-4 rounded-card bg-gold text-earth-800 font-bold text-base uppercase hover:bg-gold-500 transition-all hover:-translate-y-1">
+        View on GitHub
+      </a>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</Base>
+
+<script>
+  (async () => {
+    try {
+      const gh = await fetch('/.netlify/functions/github-traffic').then(r => r.json());
+      if (!gh.configured || !Array.isArray(gh.repos)) return;
+      for (const repo of gh.repos) {
+        const card = document.querySelector(`[data-repo="${repo.name}"] .download-count`);
+        if (card) card.textContent = (repo.clones || 0).toLocaleString();
+      }
+    } catch (e) {}
+  })();
+</script>

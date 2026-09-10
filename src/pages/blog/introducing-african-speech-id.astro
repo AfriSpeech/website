@@ -1,0 +1,98 @@
+---
+import Base from '../../layouts/Base.astro';
+import Navigation from '../../components/Navigation.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Base title="Introducing African Speech ID" description="Our flagship language identification model supports 1,386 African languages and runs on CPU.">
+  <Navigation slot="nav" />
+
+  <article class="pt-32 pb-16 sm:pt-40 sm:pb-20 bg-savanna">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <a href="/blog" class="inline-flex items-center text-sm font-bold text-gold hover:text-gold-600 mb-8">
+          &larr; Back to Blog
+        </a>
+
+        <div class="mb-8">
+          <time class="text-sm text-baobab mb-2 block">January 15, 2024</time>
+          <h1 class="text-3xl sm:text-4xl font-bold text-earth-800 mb-4">Introducing African Speech ID</h1>
+          <p class="text-lg text-baobab leading-relaxed">
+            Our flagship language identification model supports 1,386 African languages and runs on CPU.
+          </p>
+        </div>
+
+        <div class="bg-ivory border border-savanna-200 rounded-card p-8 mb-8">
+          <h2 class="text-xl font-bold text-earth-800 mb-4">The Challenge</h2>
+          <p class="text-base text-baobab leading-relaxed mb-4">
+            There are over 2,000 African languages, yet very few have been included in modern NLP research.
+            Existing language identification models cover a fraction of these languages, leaving most African
+            speech data unlabeled and unusable.
+          </p>
+          <p class="text-base text-baobab leading-relaxed">
+            We set out to build a language ID model that covers as many African languages as possible,
+            while remaining fast enough to run on consumer hardware.
+          </p>
+        </div>
+
+        <div class="bg-ivory border border-savanna-200 rounded-card p-8 mb-8">
+          <h2 class="text-xl font-bold text-earth-800 mb-4">Our Approach</h2>
+          <p class="text-base text-baobab leading-relaxed mb-4">
+            African Speech ID uses a two-stage approach:
+          </p>
+          <ol class="list-decimal list-inside space-y-2 text-base text-baobab mb-4">
+            <li><strong>Transcription:</strong> A fast version of Omnilingual ASR transcribes the audio into text characters.</li>
+            <li><strong>Classification:</strong> A lightweight classifier then identifies the language based on the transcription.</li>
+          </ol>
+          <p class="text-base text-baobab leading-relaxed">
+            This approach is both accurate and efficient. The model runs at 3.5x realtime on a single CPU core,
+            making it suitable for deployment on phones and laptops.
+          </p>
+        </div>
+
+        <div class="bg-ivory border border-savanna-200 rounded-card p-8 mb-8">
+          <h2 class="text-xl font-bold text-earth-800 mb-4">Results</h2>
+          <p class="text-base text-baobab leading-relaxed mb-4">
+            The model covers 1,386 African languages including dialects. It requires just 5 seconds of audio
+            and runs entirely on CPU with no GPU needed.
+          </p>
+          <div class="grid grid-cols-2 gap-4 mt-6">
+            <div class="p-4 rounded-card bg-gold-50 text-center">
+              <div class="text-2xl font-bold text-gold">1,386</div>
+              <div class="text-sm text-baobab">Languages</div>
+            </div>
+            <div class="p-4 rounded-card bg-gold-50 text-center">
+              <div class="text-2xl font-bold text-gold">3.5x</div>
+              <div class="text-sm text-baobab">Realtime Speed</div>
+            </div>
+            <div class="p-4 rounded-card bg-gold-50 text-center">
+              <div class="text-2xl font-bold text-gold">5s</div>
+              <div class="text-sm text-baobab">Min. Audio Length</div>
+            </div>
+            <div class="p-4 rounded-card bg-gold-50 text-center">
+              <div class="text-2xl font-bold text-gold">CPU</div>
+              <div class="text-sm text-baobab">No GPU Needed</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-ivory border border-savanna-200 rounded-card p-8 mb-8">
+          <h2 class="text-xl font-bold text-earth-800 mb-4">Try It</h2>
+          <p class="text-base text-baobab leading-relaxed mb-4">
+            You can try African Speech ID right now using our live demo:
+          </p>
+          <a href="/models#african-speech-id" class="inline-flex items-center px-6 py-3 rounded-card bg-gold text-earth-800 font-bold text-base hover:bg-gold-500 transition-all">
+            Try the Demo
+          </a>
+        </div>
+
+        <div class="flex gap-4">
+          <a href="https://huggingface.co/AfriSpeech/african-speech-id" target="_blank" rel="noopener" class="text-base font-bold text-gold hover:text-gold-600">View on HuggingFace &rarr;</a>
+          <a href="https://github.com/AfriSpeech/african-speech-id" target="_blank" rel="noopener" class="text-base font-bold text-baobab hover:text-earth-600">View on GitHub &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <Footer slot="footer" />
+</Base>

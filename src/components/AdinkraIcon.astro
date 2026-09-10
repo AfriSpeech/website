@@ -1,0 +1,49 @@
+---
+// Adinkra symbol artwork from Adinkra Icons (Apache-2.0) — see
+// src/icons/adinkra/NOTICE for attribution. The SVGs are inlined at build
+// time via import.meta.glob so they inherit currentColor and cost no extra
+// requests, rather than being fetched as <img>.
+import { meanings } from '../lib/adinkra.mjs';
+
+const files = import.meta.glob('../icons/adinkra/*.svg', { query: '?raw', import: 'default', eager: true });
+
+const sources: Record<string, string> = Object.fromEntries(
+  Object.entries(files).map(([path, raw]) => [path.split('/').pop()!.replace('.svg', ''), raw as string]),
+);
+
+
+interface Props {
+  symbol: string;
+  size?: number;
+  class?: string;
+}
+
+const { symbol, size = 48, class: className = '' } = Astro.props;
+
+const raw = sources[symbol];
+if (!raw) {
+  throw new Error(`Unknown Adinkra symbol "${symbol}". Available: ${Object.keys(sources).join(', ')}`);
+}
+
+const meta = meanings[symbol] ?? { label: symbol, meaning: symbol };
+
+// Re-emit the vendored artwork with our own sizing, colour and a11y wrapper:
+// take the inner markup, drop the source's hardcoded black fills, and let the
+// symbol inherit currentColor from its container.
+const inner = raw
+  .replace(/^[\s\S]*?<svg[^>]*>/, '')
+  .replace(/<\/svg>\s*$/, '')
+  .replace(/fill="(?:black|#000(?:000)?)"/gi, 'fill="currentColor"');
+---
+
+<svg
+  class={className}
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="currentColor"
+  xmlns="http://www.w3.org/2000/svg"
+  role="img"
+  aria-label={`${meta.label} — ${meta.meaning}`}
+  set:html={inner}
+/>

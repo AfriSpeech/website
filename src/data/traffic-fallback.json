@@ -1,0 +1,95 @@
+{
+  "clones": 189,
+  "views": 262,
+  "uniques": 159,
+  "repos": [
+    {
+      "name": "african-speech-id",
+      "clones": 58,
+      "cloneUniques": 32,
+      "views": 125,
+      "days": 14
+    },
+    {
+      "name": "africa-g2p",
+      "clones": 51,
+      "cloneUniques": 25,
+      "views": 32,
+      "days": 14
+    },
+    {
+      "name": "africa-corpus-builder",
+      "clones": 19,
+      "cloneUniques": 14,
+      "views": 34,
+      "days": 14
+    },
+    {
+      "name": "afrispeech-selector",
+      "clones": 16,
+      "cloneUniques": 15,
+      "views": 47,
+      "days": 14
+    },
+    {
+      "name": "awesome-africa-nlp",
+      "clones": 14,
+      "cloneUniques": 14,
+      "views": 2,
+      "days": 14
+    },
+    {
+      "name": "afriso",
+      "clones": 7,
+      "cloneUniques": 5,
+      "views": 10,
+      "days": 14
+    },
+    {
+      "name": "african-nlp-communities",
+      "clones": 6,
+      "cloneUniques": 6,
+      "views": 0,
+      "days": 14
+    },
+    {
+      "name": "afrispeech-datagen",
+      "clones": 5,
+      "cloneUniques": 4,
+      "views": 2,
+      "days": 14
+    },
+    {
+      "name": "afrispeech-ipa-trainer",
+      "clones": 5,
+      "cloneUniques": 5,
+      "views": 1,
+      "days": 14
+    },
+    {
+      "name": "akiti-tts",
+      "clones": 4,
+      "cloneUniques": 4,
+      "views": 6,
+      "days": 14
+    },
+    {
+      "name": "africa-mt-builder",
+      "clones": 3,
+      "cloneUniques": 3,
+      "views": 3,
+      "days": 14
+    },
+    {
+      "name": "kasanoma",
+      "clones": 1,
+      "cloneUniques": 1,
+      "views": 0,
+      "days": 14
+    }
+  ],
+  "since": "2026-08-27",
+  "lastSnapshotAt": "2026-09-10T14:35:46.350Z",
+  "generatedAt": "2026-09-10T14:35:46.352Z",
+  "generatedFrom": "github-14d"
+}

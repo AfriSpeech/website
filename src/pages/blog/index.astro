@@ -1,0 +1,46 @@
+---
+import Base from '../../layouts/Base.astro';
+import Navigation from '../../components/Navigation.astro';
+import Footer from '../../components/Footer.astro';
+
+const posts = [
+  {
+    title: 'Introducing African Speech ID',
+    date: '2024-01-15',
+    excerpt: 'Our flagship language identification model supports 1,386 African languages and runs on CPU.',
+    slug: 'introducing-african-speech-id',
+  },
+];
+---
+
+<Base title="Blog" description="News and updates from the AfriSpeech team.">
+  <Navigation slot="nav" />
+
+  <section class="pt-32 pb-16 sm:pt-40 sm:pb-20 bg-savanna">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <h1 class="text-3xl sm:text-4xl font-bold text-earth-800 mb-4">Blog</h1>
+        <p class="text-lg text-baobab leading-relaxed">
+          News, tutorials, and updates from the AfriSpeech team.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 sm:py-20 bg-ivory">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl space-y-8">
+        {posts.map(post => (
+          <a href={`/blog/${post.slug}`} class="block p-8 rounded-card border border-savanna-200 bg-ivory hover:shadow-card-hover hover:border-gold-200 transition-all group">
+            <time class="text-sm text-baobab mb-2 block">{post.date}</time>
+            <h2 class="text-xl font-bold text-earth-700 mb-3 group-hover:text-gold transition-colors">{post.title}</h2>
+            <p class="text-base text-baobab leading-relaxed">{post.excerpt}</p>
+            <span class="text-base font-bold text-gold mt-4 inline-block">Read more &rarr;</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</Base>

@@ -1,0 +1,12 @@
+Adinkra symbol artwork in this directory is from Adinkra Icons
+(https://github.com/kevinkhagan/adinkra-icons) by Kevin K. Hagan,
+licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Files were copied unmodified except that `fill` is rewritten to
+`currentColor` at render time so the symbols inherit the surrounding
+text colour. Two files were renamed for clarity:
+  sankofa-two.svg                 -> sankofa.svg
+  funtunfunefu-denkyemfunefu.svg  -> funtunfunefu.svg
+
+The Adinkra symbols themselves are traditional designs of the Akan
+people of Ghana and Côte d'Ivoire.

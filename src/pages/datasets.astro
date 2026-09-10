@@ -1,0 +1,137 @@
+---
+import Base from '../layouts/Base.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+import DatasetCard from '../components/DatasetCard.astro';
+
+const datasets = [
+  {
+    name: 'Africa Corpus',
+    description: 'Monolingual and parallel text data for 693 African languages. The largest African language corpus on HuggingFace.',
+    rows: '16.6M',
+    languages: '276',
+    downloads: 285,
+    href: 'https://huggingface.co/datasets/AfriSpeech/africa-corpus',
+    tags: ['Parallel', 'Monolingual', 'Text'],
+  },
+  {
+    name: 'African Speech IPA',
+    description: 'Audio paired with IPA phoneme transcriptions for 934 African languages. Used for training CTC phoneme recognisers.',
+    rows: '776K',
+    languages: '934',
+    downloads: 723,
+    href: 'https://huggingface.co/datasets/AfriSpeech/african-speech-ipa',
+    tags: ['Speech', 'IPA', 'Phonemes'],
+  },
+  {
+    name: 'African Speech Public v1',
+    description: 'Public release of African speech data covering multiple languages and recording conditions.',
+    rows: '779K',
+    languages: '195',
+    downloads: 227,
+    href: 'https://huggingface.co/datasets/AfriSpeech/african-speech-public_v1',
+    tags: ['Speech', 'Public'],
+  },
+  {
+    name: 'GRN African Speech',
+    description: 'Speech data from GRN (Global Recordings Network) covering over 1,000 African language communities.',
+    rows: '739K',
+    languages: '86',
+    downloads: 84,
+    href: 'https://huggingface.co/datasets/AfriSpeech/grn-african-speech',
+    tags: ['Speech', 'GRN', 'Religious'],
+  },
+  {
+    name: 'Open Bible Speech African',
+    description: 'Bible audio recordings in African languages from YouVersion. Widely used for ASR and TTS training.',
+    rows: '553K',
+    languages: '1.09K',
+    downloads: 1495,
+    href: 'https://huggingface.co/datasets/AfriSpeech/open-bible-speech-african',
+    tags: ['Speech', 'Bible', 'YouVersion'],
+  },
+  {
+    name: 'African Transcribed Speech (Monolingual)',
+    description: 'Transcribed speech data in monolingual format for training speech recognition models.',
+    rows: '552K',
+    languages: '113',
+    downloads: 116,
+    href: 'https://huggingface.co/datasets/AfriSpeech/african-transcribed-speech-monolingual',
+    tags: ['Speech', 'Transcribed', 'ASR'],
+  },
+  {
+    name: 'African Transcribed Speech (Parallel)',
+    description: 'Parallel transcribed speech data for multilingual and cross-lingual speech research.',
+    rows: '53',
+    languages: 'Multiple',
+    downloads: 55,
+    href: 'https://huggingface.co/datasets/AfriSpeech/african-transcribed-speech-parallel',
+    tags: ['Speech', 'Parallel', 'Multilingual'],
+  },
+  {
+    name: 'YouVersion African Speech',
+    description: 'Speech data extracted from YouVersion Bible audio across African languages.',
+    rows: '98.9K',
+    languages: '104',
+    downloads: 103,
+    href: 'https://huggingface.co/datasets/AfriSpeech/youversion-african-speech',
+    tags: ['Speech', 'YouVersion', 'Bible'],
+  },
+];
+---
+
+<Base title="Datasets" description="Open speech and text datasets for African languages. Freely available on HuggingFace.">
+  <Navigation slot="nav" />
+
+  <section class="pt-32 pb-16 sm:pt-40 sm:pb-20 bg-savanna">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <h1 class="text-3xl sm:text-4xl font-bold text-earth-800 mb-4">Datasets</h1>
+        <p class="text-lg text-baobab leading-relaxed">
+          Curated speech and text datasets covering hundreds of African languages. All datasets are freely available on HuggingFace.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 sm:py-20 bg-ivory">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {datasets.map(ds => (
+          <DatasetCard {...ds} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 sm:py-20 bg-savanna">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h2 class="text-2xl font-bold text-earth-800 mb-4">All Datasets on HuggingFace</h2>
+      <p class="text-baobab mb-6 max-w-lg mx-auto text-base">
+        Browse all 8 AfriSpeech datasets directly on HuggingFace.
+      </p>
+      <a href="https://huggingface.co/AfriSpeech" target="_blank" rel="noopener" class="inline-flex items-center px-8 py-4 rounded-card bg-gold text-earth-800 font-bold text-base uppercase hover:bg-gold-500 transition-all hover:-translate-y-1">
+        View on HuggingFace
+      </a>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</Base>
+
+<script>
+  (async () => {
+    try {
+      const r = await fetch('https://huggingface.co/api/datasets?author=AfriSpeech&limit=50');
+      const list = await r.json();
+      const map = {};
+      list.forEach(d => { map[d.id] = d.downloads; });
+      document.querySelectorAll('[data-hf]').forEach(el => {
+        const n = map[el.dataset.hf];
+        if (n == null) return;
+        const span = el.querySelector('.download-count');
+        if (span) span.textContent = n.toLocaleString();
+      });
+    } catch (e) {}
+  })();
+</script>
