@@ -13,27 +13,27 @@ const { name, description, rows, languages, downloads, href, tags = [] } = Astro
 const hfId = href.replace('https://huggingface.co/datasets/', '');
 ---
 
-<div class="group p-6 rounded-card border border-savanna-200 bg-ivory hover:shadow-card-hover hover:border-gold-200 transition-all">
+<div class="group p-6 rounded-card border border-neutral-200 bg-white hover:border-neutral-300 transition-colors">
   <div class="flex items-start justify-between mb-2">
-    <h3 class="text-lg font-bold text-earth-700 group-hover:text-gold transition-colors leading-tight">{name}</h3>
-    <div class="flex items-center gap-1 text-sm text-baobab shrink-0 ml-3" data-hf={hfId}>
-      <svg class="w-4 h-4 text-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+    <h3 class="text-lg font-semibold text-neutral-900 group-hover:text-forest-600 transition-colors leading-tight">{name}</h3>
+    <div class="flex items-center gap-1 text-sm text-neutral-600 shrink-0 ml-3" data-hf={hfId}>
+      <svg class="w-4 h-4 text-forest-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
       <span class="download-count">{downloads.toLocaleString()}</span>
     </div>
   </div>
-  <p class="text-base text-baobab leading-relaxed mb-3">{description}</p>
-  <div class="flex items-center gap-4 text-sm text-baobab mb-3">
+  <p class="text-base text-neutral-600 leading-relaxed mb-3">{description}</p>
+  <div class="flex items-center gap-4 text-sm font-mono text-neutral-600 mb-3">
     <span>{rows} rows</span>
     <span>{languages} languages</span>
   </div>
   {tags.length > 0 && (
     <div class="flex flex-wrap gap-2 mb-4">
       {tags.map(tag => (
-        <span class="text-sm px-3 py-1 rounded-card bg-gold-50 text-gold font-semibold">{tag}</span>
+        <span class="text-xs px-2.5 py-1 rounded-md border border-neutral-200 bg-neutral-100 text-neutral-600 font-medium">{tag}</span>
       ))}
     </div>
   )}
-  <a href={href} target="_blank" rel="noopener" class="text-base font-bold text-gold hover:text-gold-600">
+  <a href={href} target="_blank" rel="noopener" class="text-sm font-medium text-forest-700 hover:text-forest-400">
     View Dataset &rarr;
   </a>
 </div>

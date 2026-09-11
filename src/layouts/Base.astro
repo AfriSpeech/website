@@ -7,6 +7,9 @@ interface Props {
   appendSiteName?: boolean;
 }
 
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
+
 const { title, description = 'Building open-source NLP tools for African languages. Models, datasets, and demos for 1,386 African languages.', image = '/images/afrispeech-logo.png', appendSiteName = true } = Astro.props;
 const pageTitle = appendSiteName ? `${title} | AfriSpeech` : title;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
@@ -36,12 +39,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta name="twitter:image" content={new URL(image, Astro.url)} />
 
     <link rel="sitemap" href="/sitemap-index.xml" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
   </head>
-  <body class="bg-ivory text-earth-500 font-sans antialiased">
+  <body class="bg-paper text-ink-500 font-sans antialiased">
     <slot name="nav" />
     <main>
       <slot />
@@ -56,12 +55,12 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   @tailwind utilities;
 
   @layer base {
-    html { scroll-behavior: smooth; }
-    body { font-size: 16px; line-height: 1.65; }
-    ::selection { background: rgba(212, 160, 23, 0.2); color: #3E2723; }
+    html { color-scheme: light; scroll-behavior: smooth; }
+    body { font-size: 16px; line-height: 1.65; background: #FAFAFA; }
+    ::selection { background: rgba(82, 183, 136, 0.3); color: #0A281A; }
 
     h1, h2, h3, h4, h5, h6 {
-      color: #3E2723;
+      color: #343B36;
       font-weight: 700;
       margin-top: 0;
     }

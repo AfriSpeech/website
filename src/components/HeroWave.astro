@@ -1,0 +1,43 @@
+---
+// Animated 3-curve sound wave echoing the AfriSpeech emblem's waves,
+// with the AfriSpeech map image on its left. Pure CSS animation — no video.
+const duration = 2.6;
+const waves = [
+  { d: 'M40 60 Q120 100 40 140', color: '#2D6A4F', delay: 0 },
+  { d: 'M40 40 Q150 100 40 160', color: '#52B788', delay: duration * 0.33 },
+  { d: 'M40 20 Q180 100 40 180', color: '#74C69D', delay: duration * 0.66 },
+];
+---
+
+<div
+  class="hidden lg:flex absolute top-1/2 right-0 -translate-y-1/2 items-center gap-2 pointer-events-none select-none"
+  aria-hidden="true"
+>
+  <img src="/images/afrispeech-map.png" alt="" width="196" height="191" class="h-36 w-auto sm:h-44" />
+  <svg width="360" height="360" viewBox="0 0 220 220" fill="none">
+    {waves.map(w => (
+      <path
+        class="hero-wave"
+        d={w.d}
+        stroke={w.color}
+        stroke-width="4"
+        stroke-linecap="round"
+        style={`--delay:${w.delay}s`}
+      />
+    ))}
+  </svg>
+</div>
+
+<style is:global>
+  .hero-wave {
+    animation: hero-wave-grow 2.6s ease-out infinite;
+    animation-delay: var(--delay);
+    transform-box: view-box;
+    transform-origin: 40px 100px;
+  }
+  @keyframes hero-wave-grow {
+    0% { transform: scale(0.3); opacity: 0; }
+    20% { opacity: 0.9; }
+    100% { transform: scale(1.25); opacity: 0; }
+  }
+</style>

@@ -16,26 +16,26 @@ const posts = [
 <Base title="Blog" description="News and updates from the AfriSpeech team.">
   <Navigation slot="nav" />
 
-  <section class="pt-32 pb-16 sm:pt-40 sm:pb-20 bg-savanna">
+  <section class="pt-24 pb-16 sm:pt-28 sm:pb-20 bg-mist">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl">
-        <h1 class="text-3xl sm:text-4xl font-bold text-earth-800 mb-4">Blog</h1>
-        <p class="text-lg text-baobab leading-relaxed">
+        <h1 class="text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight mb-4">Blog</h1>
+        <p class="text-lg text-neutral-600 leading-relaxed">
           News, tutorials, and updates from the AfriSpeech team.
         </p>
       </div>
     </div>
   </section>
 
-  <section class="py-16 sm:py-20 bg-ivory">
+  <section class="py-16 sm:py-20 bg-paper">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl space-y-8">
         {posts.map(post => (
-          <a href={`/blog/${post.slug}`} class="block p-8 rounded-card border border-savanna-200 bg-ivory hover:shadow-card-hover hover:border-gold-200 transition-all group">
-            <time class="text-sm text-baobab mb-2 block">{post.date}</time>
-            <h2 class="text-xl font-bold text-earth-700 mb-3 group-hover:text-gold transition-colors">{post.title}</h2>
-            <p class="text-base text-baobab leading-relaxed">{post.excerpt}</p>
-            <span class="text-base font-bold text-gold mt-4 inline-block">Read more &rarr;</span>
+          <a href={`/blog/${post.slug}`} class="block p-8 rounded-card border border-mist-200 bg-paper hover:shadow-card-hover hover:border-forest-200 transition-all group">
+            <time class="text-sm text-sage mb-2 block">{post.date}</time>
+            <h2 class="text-xl font-bold text-ink-700 mb-3 group-hover:text-forest transition-colors">{post.title}</h2>
+            <p class="text-base text-sage leading-relaxed">{post.excerpt}</p>
+            <span class="text-base font-bold text-forest mt-4 inline-block">Read more &rarr;</span>
           </a>
         ))}
       </div>
