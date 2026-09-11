@@ -87,11 +87,11 @@ import Footer from '../components/Footer.astro';
               <div id="hint" class="mt-4 text-base text-neutral-600"></div>
             </div>
             <div class="px-6 pb-6 flex gap-3">
-              <label for="file" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-card border border-mist-200 bg-mist text-base font-bold text-ink-700 cursor-pointer hover:border-forest hover:text-forest transition-colors">
+              <label for="file" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-card border border-mist-200 bg-mist text-base font-bold text-ink-700 cursor-pointer hover:border-forest hover:text-forest-700 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
                 Upload Audio
               </label>
-              <button id="rec" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-card border border-mist-200 bg-mist text-base font-bold text-ink-700 cursor-pointer hover:border-forest hover:text-forest transition-colors">
+              <button id="rec" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-card border border-mist-200 bg-mist text-base font-bold text-ink-700 cursor-pointer hover:border-forest hover:text-forest-700 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
                 Record
               </button>
@@ -201,7 +201,7 @@ function render(filter) {
     const b = document.createElement("button");
     b.textContent = entry.name;
     b.title = entry.iso;
-    b.className = "px-4 py-2 text-base rounded-card border border-mist-200 bg-paper text-ink-700 hover:border-forest hover:text-forest transition-colors cursor-pointer font-semibold";
+    b.className = "px-4 py-2 text-base rounded-card border border-mist-200 bg-paper text-ink-700 hover:border-forest hover:text-forest-700 transition-colors cursor-pointer font-semibold";
     b.onclick = () => playSample(entry, b);
     box.appendChild(b);
   });
