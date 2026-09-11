@@ -13,7 +13,7 @@ const { name, description, downloads, language, href, tags = [] } = Astro.props;
 
 <div class="group p-6 rounded-card border border-mist-200 bg-paper hover:shadow-card-hover hover:border-forest-200 transition-all" data-repo={name}>
   <div class="flex items-start justify-between mb-2">
-    <h3 class="text-lg font-bold text-ink-700 transition-colors">{name}</h3>
+    <h3 class="text-lg font-bold text-neutral-900 transition-colors">{name}</h3>
     <div class="flex items-center gap-1 text-sm text-sage shrink-0 ml-3" title="Repository downloads (clones) in the last 14 days">
       <svg class="w-4 h-4 text-forest-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
       <span class="download-count">{downloads.toLocaleString()}</span>

@@ -15,7 +15,7 @@ const hfId = href.replace('https://huggingface.co/datasets/', '');
 
 <div class="group p-6 rounded-card border border-neutral-200 bg-white hover:border-neutral-300 transition-colors">
   <div class="flex items-start justify-between mb-2">
-    <h3 class="text-lg font-semibold text-forest-800 transition-colors leading-tight">{name}</h3>
+    <h3 class="text-lg font-semibold text-neutral-900 transition-colors leading-tight">{name}</h3>
     <div class="flex items-center gap-1 text-sm text-neutral-600 shrink-0 ml-3" data-hf={hfId}>
       <svg class="w-4 h-4 text-forest-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
       <span class="download-count">{downloads.toLocaleString()}</span>
