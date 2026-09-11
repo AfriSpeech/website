@@ -1,0 +1,31 @@
+[
+  {
+    "id": "african-speech-id",
+    "title": "African Speech ID",
+    "subtitle": "1,386 African languages",
+    "description": "Identify which African language is being spoken in an audio clip. Uses a fast version of Omnilingual ASR to transcribe speech, then a lightweight classifier names the language. Runs entirely on CPU.",
+    "bullets": [
+      "CPU-friendly: 3.5x realtime on one core",
+      "Classification head: 265 MB",
+      "Speech recogniser: 365 MB",
+      "5 seconds minimum audio"
+    ],
+    "tags": ["Audio Classification", "ONNX", "Apache 2.0"],
+    "huggingface": "https://huggingface.co/AfriSpeech/african-speech-id",
+    "github": "https://github.com/AfriSpeech/african-speech-id",
+    "featured": true,
+    "has_demo": true
+  },
+  {
+    "id": "african-speech-gender-id",
+    "title": "African Speech Gender ID",
+    "subtitle": "Audio Classification",
+    "description": "Identify speaker gender from African speech audio. Trained on diverse African language data for robust performance across accents and recording conditions.",
+    "bullets": [],
+    "tags": ["Audio Classification", "Gender ID"],
+    "huggingface": "https://huggingface.co/AfriSpeech/afrispeech-gender-id",
+    "github": "",
+    "featured": false,
+    "has_demo": false
+  }
+]

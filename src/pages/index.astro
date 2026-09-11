@@ -3,11 +3,13 @@ import Base from '../layouts/Base.astro';
 import Navigation from '../components/Navigation.astro';
 import Footer from '../components/Footer.astro';
 import FeatureCard from '../components/FeatureCard.astro';
-import ModelCard from '../components/ModelCard.astro';
+import SpeechIdDemo from '../components/SpeechIdDemo.astro';
 import HeroWave from '../components/HeroWave.astro';
 import { getTraffic } from '../lib/github-traffic.mjs';
+import models from '../data/models.json';
 
 const traffic = await getTraffic();
+const featured = models.find(m => m.featured) || models[0];
 ---
 
 <Base title="AfriSpeech | Open-source NLP for Africa" appendSiteName={false}>
@@ -106,26 +108,47 @@ const traffic = await getTraffic();
         <p class="font-mono text-xs uppercase tracking-widest text-neutral-600 mb-3">Live demo</p>
         <h2 class="text-3xl sm:text-4xl font-bold text-neutral-900 mb-4">Try It Now</h2>
         <p class="text-neutral-600 max-w-2xl mx-auto text-base">
-          Our flagship model identifies which of 1,386 African languages is being spoken in an audio clip. It runs on CPU.
+          {featured.description}
         </p>
       </div>
 
-      <div class="max-w-2xl mx-auto">
-        <ModelCard
-          name="African Speech ID"
-          description="Identify the African language spoken in an audio clip. CPU-friendly, fast, covers 1,386 languages including dialects. Based on Omnilingual ASR with a lightweight classifier head."
-          languages="1,386 African languages"
-          tags={['Audio Classification', 'CPU-friendly', 'ONNX', 'Apache 2.0']}
-          href="https://huggingface.co/AfriSpeech/african-speech-id"
-          demoHref="/models#african-speech-id"
-          downloads="67 downloads"
-        />
-      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div class="lg:col-span-1">
+          <h3 class="text-2xl font-semibold text-neutral-900 tracking-tight mb-3">{featured.title}</h3>
+          <p class="text-sm font-mono text-forest-700 mb-4">{featured.subtitle}</p>
+          <div class="space-y-3 mb-6">
+            {
+              featured.bullets.map(bullet => (
+                <div class="flex items-center gap-3 text-base">
+                  <span class="w-2 h-2 rounded-full bg-forest"></span>
+                  <span class="text-ink-600">{bullet}</span>
+                </div>
+              ))
+            }
+          </div>
+          <div class="flex flex-wrap gap-2 mb-6">
+            {
+              featured.tags.map(tag => (
+                <span class="text-xs px-2.5 py-1 rounded-md border border-neutral-200 bg-neutral-100 text-neutral-600 font-medium">{tag}</span>
+              ))
+            }
+          </div>
+          <div class="flex flex-wrap gap-4">
+            <a href={featured.huggingface} target="_blank" rel="noopener" class="text-base font-bold text-forest-800">HuggingFace &rarr;</a>
+            {featured.github && (
+              <a href={featured.github} target="_blank" rel="noopener" class="text-base font-bold text-neutral-600 hover:text-ink-600">GitHub &rarr;</a>
+            )}
+          </div>
+          <div class="mt-8">
+            <a href={`/models#${featured.id}`} class="text-base font-bold text-forest-800 uppercase">
+              View all models &rarr;
+            </a>
+          </div>
+        </div>
 
-      <div class="text-center mt-8">
-        <a href="/models" class="text-base font-bold text-forest-800 uppercase">
-          View all models &rarr;
-        </a>
+        <div class="lg:col-span-2">
+          {featured.has_demo && <SpeechIdDemo />}
+        </div>
       </div>
     </div>
   </section>

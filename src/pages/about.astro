@@ -20,8 +20,9 @@ import Footer from '../components/Footer.astro';
 
   <section class="py-16 sm:py-20 bg-paper">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="max-w-3xl">
-        <h2 class="text-2xl font-bold text-neutral-900 mb-6">Our Mission</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,42rem)_1fr] gap-12">
+        <div class="max-w-3xl">
+          <h2 class="text-2xl font-bold text-neutral-900 mb-6">Our Mission</h2>
         <p class="text-base text-sage leading-relaxed mb-8">
           There are over 2,000 African languages, yet very few have been included in modern NLP research and tooling.
           AfriSpeech exists to change that. We build open-source models, datasets, and tools that make it easy to work
@@ -66,8 +67,33 @@ import Footer from '../components/Footer.astro';
           </a>
         </div>
       </div>
+      <div class="hidden lg:flex items-start justify-center" aria-hidden="true">
+        <div class="flex items-center gap-2 pointer-events-none select-none">
+          <img src="/images/afrispeech-map.png" alt="" width="196" height="191" class="h-40 w-auto" />
+          <svg width="320" height="320" viewBox="0 0 220 220" fill="none">
+            <path class="about-wave" d="M40 60 Q120 100 40 140" stroke="#2D6A4F" stroke-width="4" stroke-linecap="round" style="--delay:0s" />
+            <path class="about-wave" d="M40 40 Q150 100 40 160" stroke="#52B788" stroke-width="4" stroke-linecap="round" style="--delay:0.86s" />
+            <path class="about-wave" d="M40 20 Q180 100 40 180" stroke="#74C69D" stroke-width="4" stroke-linecap="round" style="--delay:1.72s" />
+          </svg>
+        </div>
+      </div>
+      </div>
     </div>
   </section>
 
   <Footer slot="footer" />
 </Base>
+
+<style>
+  .about-wave {
+    animation: hero-wave-grow 2.6s ease-out infinite;
+    animation-delay: var(--delay);
+    transform-box: view-box;
+    transform-origin: 40px 100px;
+  }
+  @keyframes hero-wave-grow {
+    0% { transform: scale(0.3); opacity: 0; }
+    20% { opacity: 0.9; }
+    100% { transform: scale(1.25); opacity: 0; }
+  }
+</style>

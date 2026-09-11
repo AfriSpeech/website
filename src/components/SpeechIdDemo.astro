@@ -1,0 +1,196 @@
+---
+// Reusable African Speech ID live demo panel (CPU, runs in-browser).
+const demoId = 'demo-' + Math.random().toString(36).slice(2, 8);
+const gid = (suffix) => `${demoId}-${suffix}`;
+---
+
+<div class="rounded-card border border-mist-200 bg-paper overflow-hidden">
+  <div class="px-6 py-4 border-b border-mist-200 bg-mist">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-forest"></span>
+      <span class="text-base font-bold text-neutral-900">Live Demo</span>
+    </div>
+  </div>
+  <div class="p-6">
+    <h3 class="text-lg font-bold text-neutral-900 mb-1">African Speech ID</h3>
+    <p class="text-base text-neutral-600 mb-5">Pick a sample audio below to see what the model makes of it.</p>
+    <div class="mb-4">
+      <input id={gid('search')} type="search" autocomplete="off" placeholder="Search 68 languages..."
+        class="w-full px-4 py-3 text-base rounded-card border border-mist-200 bg-paper text-ink-700 placeholder-sage focus:outline-none focus:border-forest transition-colors" />
+    </div>
+    <div id={gid('chips')} class="flex flex-wrap gap-2 max-h-64 overflow-y-auto mb-3"></div>
+    <p id={gid('count')} class="text-sm text-neutral-600 mb-1"></p>
+    <audio id={gid('clip')} class="w-full mt-4" controls hidden></audio>
+    <div id={gid('out')} class="mt-5 pt-5 border-t border-mist-200 hidden">
+      <div id={gid('lang')} class="text-2xl font-bold text-ink-700"></div>
+      <div id={gid('conf')} class="text-sm text-neutral-600 mt-1"></div>
+      <div id={gid('verdict')} class="mt-3 text-base"></div>
+      <div id={gid('bars')} class="mt-4 space-y-2"></div>
+      <div id={gid('tx')} class="mt-4 p-4 rounded-card bg-mist border border-mist-200 text-base text-ink-600 break-words"></div>
+    </div>
+    <div id={gid('hint')} class="mt-4 text-base text-neutral-600"></div>
+  </div>
+  <div class="px-6 pb-6 flex gap-3">
+    <label for={gid('file')} class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-card border border-mist-200 bg-mist text-base font-bold text-ink-700 cursor-pointer hover:border-forest-800 hover:text-forest-800 transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      Upload Audio
+    </label>
+    <button id={gid('rec')} class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-card border border-mist-200 bg-mist text-base font-bold text-ink-700 cursor-pointer hover:border-forest-800 hover:text-forest-800 transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
+      Record
+    </button>
+  </div>
+  <input id={gid('file')} type="file" accept="audio/*,video/*" class="hidden" />
+  <p class="px-6 pb-6 text-sm text-neutral-600">Five seconds minimum, ten or more works best.</p>
+</div>
+
+<script define:vars={{ demoId }}>
+function wireDemo(root) {
+  const WARM = "https://ghana-nlp-2--african-speech-id-identifier-warm.modal.run";
+  const IDENTIFY_FILE = "https://ghana-nlp-2--african-speech-id-identifier-identify-file.modal.run";
+  const MIN_SEC = 5.0, MAX_SEC = 20.0, SR = 16000;
+  const parts = {};
+  ['search','chips','count','clip','out','lang','conf','verdict','bars','tx','hint','file','rec'].forEach(s => {
+    parts[s] = root.querySelector('#' + demoId + '-' + s);
+  });
+  let SAMPLES = [], NAMES = {}, warmed = false, busy = false;
+
+  function warm() { if (!warmed) { warmed = true; fetch(WARM, {mode:"cors"}).catch(()=>{}); } }
+  function pretty(code) { const n = NAMES[code]; return n && n !== code ? n : code; }
+  function setHint(t, cls) { parts.hint.className = "text-base " + (cls||""); parts.hint.textContent = t; }
+
+  function show(d, expectIso, expectName) {
+    if (!d || !d.ok) {
+      const why = (d && d.reason) || "something went wrong";
+      let msg;
+      if (why === "not enough speech") msg = "Only " + (d.speech_seconds||0).toFixed(1) + "s of that was speech.";
+      else if (why === "too short") msg = "Too short - give it at least " + MIN_SEC + " seconds.";
+      else if (why === "no speech recognised") msg = "No speech recognised. Try louder or closer audio.";
+      else if (why === "too quiet") msg = "Too quiet. Move closer to the microphone.";
+      else if (why === "could not read that file") msg = "Could not read that file.";
+      else msg = "Could not identify: " + why;
+      setHint(msg, "text-amber-600");
+      parts.out.classList.add("hidden");
+      return;
+    }
+    const got = String(d.language);
+    parts.lang.textContent = pretty(got) + (pretty(got) !== got ? "  (" + got + ")" : "");
+    parts.conf.textContent = d.seconds + "s audio, " + (d.speech_seconds || "?") + "s speech, " + d.chars + " characters recognised";
+    const v = parts.verdict;
+    if (expectIso) {
+      const right = got === expectIso;
+      v.className = "mt-3 text-base " + (right ? "text-green-600" : "text-amber-600");
+      v.textContent = right ? "Correct - this clip is " + expectName + "." : "This clip is " + expectName + " (" + expectIso + ").";
+    } else { v.textContent = ""; v.className = "mt-3 text-base"; }
+    parts.bars.innerHTML = (d.top || []).map(t =>
+      '<div class="flex items-center gap-3 text-base"><span class="w-40 truncate text-ink-700">' + pretty(String(t.language)) + '</span>'
+      + '<div class="flex-1 h-1.5 bg-mist-200 rounded-full overflow-hidden"><div class="h-full bg-forest rounded-full" style="width:' + Math.min(100, Math.round(t.score*100*8)) + '%"></div></div>'
+      + '<span class="w-14 text-right text-neutral-600 tabular-nums">' + (t.score*100).toFixed(1) + '%</span></div>').join("");
+    parts.tx.innerHTML = "<strong class='text-ink-700'>Heard:</strong> " + (d.transcript || "");
+    parts.out.classList.remove("hidden");
+  }
+
+  async function post(blob, expectIso, expectName, label) {
+    if (busy) return;
+    busy = true; warm();
+    root.querySelectorAll("#" + parts.chips.id + " button").forEach(b => b.disabled = true);
+    setHint("Listening to " + (label || "audio") + "...");
+    try {
+      const r = await fetch(IDENTIFY_FILE, { method:"POST", mode:"cors", headers:{"Content-Type":"application/octet-stream"}, body: blob });
+      const d = await r.json();
+      show(d, expectIso, expectName);
+      if (d && d.ok) setHint("Pick another language, or try your own audio below.");
+    } catch (e) { setHint("Could not reach the service. Try again in a moment.", "text-red-500"); }
+    root.querySelectorAll("#" + parts.chips.id + " button").forEach(b => b.disabled = false);
+    busy = false;
+  }
+
+  async function playSample(entry, chip) {
+    root.querySelectorAll("#" + parts.chips.id + " button").forEach(b => b.dataset.on = "0");
+    chip.dataset.on = "1";
+    parts.out.classList.add("hidden");
+    const blob = await (await fetch("https://huggingface.co/spaces/AfriSpeech/african-speech-id/resolve/main/samples/" + entry.file)).blob();
+    const c = parts.clip; c.src = URL.createObjectURL(blob); c.hidden = false;
+    c.play().catch(()=>{});
+    post(blob, entry.iso, entry.name, entry.name);
+  }
+
+  function render(filter) {
+    const q = (filter || "").trim().toLowerCase();
+    const list = SAMPLES.filter(s => !q || s.name.toLowerCase().includes(q) || s.iso.toLowerCase().includes(q));
+    const box = parts.chips; box.innerHTML = "";
+    list.forEach(entry => {
+      const b = document.createElement("button");
+      b.textContent = entry.name;
+      b.title = entry.iso;
+      b.className = "px-4 py-2 text-base rounded-card border border-mist-200 bg-paper text-ink-700 hover:border-forest-800 hover:text-forest-800 transition-colors cursor-pointer font-semibold";
+      b.onclick = () => playSample(entry, b);
+      box.appendChild(b);
+    });
+    parts.count.textContent = list.length + " of " + SAMPLES.length + " languages"
+      + (q ? " matching \"" + filter + "\"" : " - held-out test audio, never seen in training");
+  }
+
+  fetch("https://huggingface.co/spaces/AfriSpeech/african-speech-id/resolve/main/samples/manifest.json").then(r => r.json()).then(list => {
+    SAMPLES = list; render("");
+  }).catch(() => setHint("Samples unavailable.", "text-red-500"));
+  fetch("https://huggingface.co/spaces/AfriSpeech/african-speech-id/resolve/main/label_names.json").then(r => r.json()).then(n => { NAMES = n; }).catch(()=>{});
+  parts.search.oninput = e => render(e.target.value);
+  parts.search.onfocus = warm;
+
+  parts.file.onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 80*1024*1024) { setHint("That file is over 80 MB.", "text-amber-600"); return; }
+    parts.clip.hidden = true;
+    post(f, null, null, f.name);
+    e.target.value = "";
+  };
+
+  let ctx, stream, node, chunks = [], recording = false, t0 = 0;
+  function encodeWav(samples, rate) {
+    const b = new ArrayBuffer(44 + samples.length*2), v = new DataView(b);
+    const w = (o,s) => { for (let i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i)); };
+    w(0,"RIFF"); v.setUint32(4, 36+samples.length*2, true); w(8,"WAVEfmt ");
+    v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+    v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true);
+    v.setUint16(34,16,true); w(36,"data"); v.setUint32(40, samples.length*2, true);
+    let o = 44;
+    for (const s of samples) { const x = Math.max(-1, Math.min(1, s));
+      v.setInt16(o, x < 0 ? x*0x8000 : x*0x7fff, true); o += 2; }
+    return new Blob([b], {type:"audio/wav"});
+  }
+  async function startRec() {
+    warm();
+    try { stream = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,
+          sampleRate:SR, echoCancellation:true, noiseSuppression:true}}); }
+    catch (e) { setHint("Microphone permission denied.", "text-red-500"); return; }
+    ctx = new (window.AudioContext || window.webkitAudioContext)({sampleRate:SR});
+    const src = ctx.createMediaStreamSource(stream);
+    node = ctx.createScriptProcessor(4096, 1, 1);
+    chunks = []; recording = true; t0 = performance.now();
+    node.onaudioprocess = e => { if (recording) chunks.push(new Float32Array(e.inputBuffer.getChannelData(0))); };
+    src.connect(node); node.connect(ctx.destination);
+    parts.rec.textContent = "Stop"; parts.rec.style.borderColor = "#B3261E"; parts.rec.style.color = "#B3261E";
+    setHint("Recording - speak for ten seconds if you can.");
+    setTimeout(() => { if (recording) stopRec(); }, MAX_SEC*1000);
+  }
+  async function stopRec() {
+    recording = false;
+    parts.rec.textContent = "Record"; parts.rec.style.borderColor = ""; parts.rec.style.color = "";
+    try { node.disconnect(); stream.getTracks().forEach(t => t.stop()); await ctx.close(); } catch(e){}
+    const secs = (performance.now() - t0)/1000;
+    if (secs < MIN_SEC) { setHint("Only " + secs.toFixed(1) + "s. At least " + MIN_SEC + "s is needed.", "text-amber-600"); return; }
+    let n = 0; chunks.forEach(c => n += c.length);
+    const all = new Float32Array(n); let off = 0;
+    chunks.forEach(c => { all.set(c, off); off += c.length; });
+    const blob = encodeWav(all, SR);
+    parts.clip.src = URL.createObjectURL(blob); parts.clip.hidden = false;
+    post(blob, null, null, "your recording");
+  }
+  parts.rec.onclick = () => recording ? stopRec() : startRec();
+  if (!navigator.mediaDevices) { parts.rec.disabled = true; parts.rec.textContent = "Recording unsupported"; }
+}
+
+wireDemo(document.getElementById(demoId + '-search').parentElement.closest('.rounded-card'));
+</script>
