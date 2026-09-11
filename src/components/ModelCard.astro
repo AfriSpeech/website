@@ -15,7 +15,7 @@ const { name, description, languages, tags, href, demoHref, downloads } = Astro.
 <div class="group p-8 rounded-card border border-neutral-200 bg-white hover:border-neutral-300 transition-colors">
   <div class="flex items-start justify-between mb-3">
     <div>
-      <h3 class="text-xl font-semibold text-forest-700 group-hover:text-forest-800 transition-colors">{name}</h3>
+      <h3 class="text-xl font-semibold text-forest-800 transition-colors">{name}</h3>
       <p class="text-sm font-mono text-neutral-600 mt-1">{languages}</p>
     </div>
     {downloads && (
@@ -29,7 +29,7 @@ const { name, description, languages, tags, href, demoHref, downloads } = Astro.
     ))}
   </div>
   <div class="flex gap-4">
-    <a href={href} target="_blank" rel="noopener" class="text-sm font-medium text-forest-700 hover:text-forest-800">
+    <a href={href} target="_blank" rel="noopener" class="text-sm font-medium text-forest-800">
       View on HuggingFace &rarr;
     </a>
     {demoHref && (
