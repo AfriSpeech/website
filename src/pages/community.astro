@@ -64,7 +64,7 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
             <div class="relative" id="language-combo">
               <div
                 id="language-field"
-                class="w-full flex flex-wrap items-center gap-2 pl-2 pr-10 py-2 rounded-card border border-mist-200 bg-white focus-within:border-forest transition-colors"
+                class="w-full flex flex-wrap items-center gap-2 pl-2 pr-10 py-2 max-h-56 overflow-y-auto rounded-card border border-mist-200 bg-white focus-within:border-forest transition-colors"
               >
                 <ul id="language-chips" class="contents" aria-label="Selected languages"></ul>
                 <input
@@ -99,9 +99,18 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
                 class="hidden absolute z-20 left-0 right-0 mt-1 max-h-72 overflow-y-auto rounded-card border border-mist-200 bg-white shadow-lg py-1"
               ></ul>
             </div>
-            <p class="mt-1.5 text-sm text-neutral-600">
-              Add as many as you work on. Backspace removes the last one.
-            </p>
+            <div class="mt-1.5 flex items-start justify-between gap-4">
+              <p class="text-sm text-neutral-600">
+                Add as many as you work on, or type a country to add every language spoken there.
+              </p>
+              <button
+                type="button"
+                id="language-clear"
+                class="hidden shrink-0 text-sm font-semibold text-neutral-600 hover:text-forest-800 transition-colors"
+              >
+                Clear all
+              </button>
+            </div>
           </div>
 
           <div>
@@ -208,11 +217,16 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
 </script>
 
 <script>
-  import { LANGUAGES, OTHER_LANGUAGE, countryNamesFor } from '../data/languages.js';
+  import {
+    LANGUAGES,
+    OTHER_LANGUAGE,
+    COUNTRY_NAMES,
+    countryNamesFor,
+  } from '../data/languages.js';
 
-  // Multi-select combobox over afriso's 2,205 living African languages.
-  // Options render on demand: 2,205 list items in the DOM is slow to parse and
-  // pointless when only a handful are ever shown.
+  // Multi-select combobox over afriso's 2,205 living African languages, with
+  // bulk add by country. Options render on demand: 2,205 list items in the DOM
+  // is slow to parse and pointless when only a handful are ever shown.
   const combo = document.getElementById('language-combo');
 
   if (combo) {
@@ -223,12 +237,15 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
     const listbox = document.getElementById('language-listbox');
     const toggle = document.getElementById('language-toggle');
     const chevron = document.getElementById('language-chevron');
+    const clearAll = document.getElementById('language-clear');
 
     const MAX_RESULTS = 60;
-    const MAX_SELECTED = 12;
+    // High enough for Nigeria's 562 languages, since bulk add by country is
+    // the whole point of the country rows.
+    const MAX_SELECTED = 600;
     const ACTIVE = ['bg-mist', 'text-forest-800'];
 
-    const chosen = [];
+    const chosen = new Map();
     let results = [];
     let activeIndex = -1;
 
@@ -237,42 +254,68 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
       String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
     const haystack = LANGUAGES.map((l) => normalize(l.name));
-    const isChosen = (lang) => chosen.some((l) => l.code === lang.code);
+
+    // Languages grouped by country, so a country row knows what it would add.
+    const BY_COUNTRY = new Map();
+    for (const lang of LANGUAGES) {
+      for (const cc of lang.countries) {
+        if (!BY_COUNTRY.has(cc)) BY_COUNTRY.set(cc, []);
+        BY_COUNTRY.get(cc).push(lang);
+      }
+    }
+
+    const COUNTRIES = [...BY_COUNTRY.entries()]
+      .map(([code, langs]) => ({
+        kind: 'country',
+        code,
+        name: COUNTRY_NAMES[code] || code,
+        langs,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'en'));
+
+    const countryHaystack = COUNTRIES.map((c) => normalize(c.name));
+    const remaining = (country) => country.langs.filter((l) => !chosen.has(l.code));
 
     function matches(term) {
       const q = normalize(term.trim());
-      const pool = [];
+      const out = [];
 
-      if (!q) {
-        for (const lang of LANGUAGES) {
-          if (!isChosen(lang)) pool.push(lang);
-          if (pool.length >= MAX_RESULTS) break;
+      // Country rows come first: someone who typed a country name wants the
+      // bulk action, not the handful of languages sharing that name.
+      if (q) {
+        for (let i = 0; i < COUNTRIES.length; i += 1) {
+          if (!countryHaystack[i].includes(q)) continue;
+          if (!remaining(COUNTRIES[i]).length) continue;
+          out.push(COUNTRIES[i]);
         }
-        return pool;
       }
 
-      // Exact code match first: typing "twi" wants Twi, not every language
-      // whose name happens to contain those letters.
       const byCode = [];
       const starts = [];
       const contains = [];
 
       for (let i = 0; i < LANGUAGES.length; i += 1) {
         const lang = LANGUAGES[i];
-        if (isChosen(lang)) continue;
-        if (lang.code === q) byCode.push(lang);
-        else if (haystack[i].startsWith(q)) starts.push(lang);
-        else if (haystack[i].includes(q)) contains.push(lang);
+        if (chosen.has(lang.code)) continue;
+        if (!q) {
+          starts.push(lang);
+        } else if (lang.code === q) {
+          byCode.push(lang);
+        } else if (haystack[i].startsWith(q)) {
+          starts.push(lang);
+        } else if (haystack[i].includes(q)) {
+          contains.push(lang);
+        }
         if (byCode.length + starts.length + contains.length >= MAX_RESULTS * 3) break;
       }
 
-      return [...byCode, ...starts, ...contains].slice(0, MAX_RESULTS);
+      return [...out, ...byCode, ...starts, ...contains].slice(0, MAX_RESULTS);
     }
 
     function renderChips() {
       chipList.replaceChildren();
 
-      for (const lang of chosen) {
+      for (const lang of chosen.values()) {
         const chip = document.createElement('li');
         chip.className =
           'inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-md bg-mist text-forest-800 text-sm font-semibold';
@@ -294,48 +337,64 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
         chipList.append(chip);
       }
 
-      hiddenCodes.value = chosen.map((l) => l.code).join(',');
-      search.placeholder = chosen.length
+      hiddenCodes.value = [...chosen.keys()].join(',');
+      search.placeholder = chosen.size
         ? 'Add another...'
-        : 'Start typing a language or ISO code...';
+        : 'Language or country, e.g. Yoruba or Ghana...';
+      clearAll.classList.toggle('hidden', chosen.size < 2);
+      clearAll.textContent = `Clear all (${chosen.size})`;
     }
 
     function renderOptions() {
       listbox.replaceChildren();
 
-      if (chosen.length >= MAX_SELECTED) {
+      for (const item of results) {
         const li = document.createElement('li');
-        li.className = 'px-4 py-2 text-base text-neutral-600';
-        li.textContent = `That is ${MAX_SELECTED} languages. Tell us about the rest below.`;
-        listbox.append(li);
-        activeIndex = -1;
-        return;
-      }
-
-      for (const lang of results) {
-        const li = document.createElement('li');
-        li.className = 'px-4 py-2 cursor-pointer';
         li.setAttribute('role', 'option');
         li.setAttribute('aria-selected', 'false');
 
-        const name = document.createElement('span');
-        name.className = 'text-base text-ink-700';
-        name.textContent = lang.name;
-        li.append(name);
+        if (item.kind === 'country') {
+          const count = remaining(item).length;
+          li.className = 'px-4 py-2 cursor-pointer border-b border-mist-200';
 
-        const where = lang === OTHER_LANGUAGE ? '' : countryNamesFor(lang);
-        if (where) {
+          const label = document.createElement('span');
+          label.className = 'text-base font-semibold text-forest-800';
+          label.textContent = `Add all languages in ${item.name}`;
+          li.append(label);
+
           const meta = document.createElement('span');
-          meta.className = 'block text-sm text-neutral-600 truncate';
-          meta.textContent = `${lang.code} · ${where}`;
+          meta.className = 'block text-sm text-neutral-600';
+          meta.textContent = `${count} language${count === 1 ? '' : 's'}`;
           li.append(meta);
+        } else {
+          li.className = 'px-4 py-2 cursor-pointer';
+
+          const name = document.createElement('span');
+          name.className = 'text-base text-ink-700';
+          name.textContent = item.name;
+          li.append(name);
+
+          const where = item === OTHER_LANGUAGE ? '' : countryNamesFor(item);
+          if (where) {
+            const meta = document.createElement('span');
+            meta.className = 'block text-sm text-neutral-600 truncate';
+            meta.textContent = `${item.code} · ${where}`;
+            li.append(meta);
+          }
         }
 
         li.addEventListener('mousedown', (e) => {
           e.preventDefault();
-          select(lang);
+          select(item);
         });
-        li.addEventListener('mouseenter', () => setActive(results.indexOf(lang)));
+        li.addEventListener('mouseenter', () => setActive(results.indexOf(item)));
+        listbox.append(li);
+      }
+
+      if (!results.length) {
+        const li = document.createElement('li');
+        li.className = 'px-4 py-2 text-base text-neutral-600';
+        li.textContent = 'No match. Try a language name, ISO code, or country.';
         listbox.append(li);
       }
 
@@ -372,15 +431,27 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
     function refresh(term) {
       results = matches(term);
       // Always leave a way out for a language afriso does not cover.
-      if (!isChosen(OTHER_LANGUAGE) && !results.includes(OTHER_LANGUAGE)) {
+      if (!chosen.has(OTHER_LANGUAGE.code) && !results.includes(OTHER_LANGUAGE)) {
         results = [...results, OTHER_LANGUAGE];
       }
       renderOptions();
     }
 
-    function select(lang) {
-      if (!lang || isChosen(lang) || chosen.length >= MAX_SELECTED) return;
-      chosen.push(lang);
+    function add(lang) {
+      if (chosen.size >= MAX_SELECTED || chosen.has(lang.code)) return;
+      chosen.set(lang.code, lang);
+    }
+
+    function select(item) {
+      if (!item) return;
+
+      if (item.kind === 'country') {
+        // Bulk add, then leave them as individual chips so any can be pruned.
+        for (const lang of remaining(item)) add(lang);
+      } else {
+        add(item);
+      }
+
       renderChips();
       // Clear the search so the next one can be typed straight away, and keep
       // the list open: picking several in a row is the common case here.
@@ -390,9 +461,7 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
     }
 
     function deselect(lang) {
-      const i = chosen.findIndex((l) => l.code === lang.code);
-      if (i === -1) return;
-      chosen.splice(i, 1);
+      chosen.delete(lang.code);
       renderChips();
       refresh(search.value);
     }
@@ -419,10 +488,10 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
           e.preventDefault();
           select(results[activeIndex]);
         }
-      } else if (e.key === 'Backspace' && !search.value && chosen.length) {
+      } else if (e.key === 'Backspace' && !search.value && chosen.size) {
         // Backspace on an empty box removes the last chip, as in any tag field.
         e.preventDefault();
-        deselect(chosen[chosen.length - 1]);
+        deselect([...chosen.values()].pop());
       } else if (e.key === 'Escape' || e.key === 'Tab') {
         close();
       }
@@ -438,6 +507,13 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
         if (exact) select(exact);
         search.value = '';
       }, 120);
+    });
+
+    clearAll.addEventListener('click', () => {
+      chosen.clear();
+      renderChips();
+      refresh('');
+      search.focus();
     });
 
     field.addEventListener('mousedown', (e) => {

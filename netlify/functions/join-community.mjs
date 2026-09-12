@@ -1,7 +1,7 @@
 import { findLanguage, countryNamesFor } from '../../src/data/languages.js';
 
 const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
-const MAX_LANGUAGES = 12;
+const MAX_LANGUAGES = 600;
 const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1yzj6-ui~rrekZQmavOujYh6x_~w';
 
 export default async function handler(req) {
@@ -127,14 +127,15 @@ async function recordSubmission({ name, email, languages, reason, emailSent }) {
 /**
  * Resolve submitted language codes to afriso entries, dropping anything
  * unknown. Deduplicated and capped, so a crafted request cannot stuff the
- * sheet with a 2,205-entry row.
+ * sheet with a 2,205-entry row. The ceiling clears Nigeria's 562 languages,
+ * which bulk add by country can legitimately produce.
  */
 function parseLanguages(value) {
   const codes = Array.isArray(value) ? value : String(value || '').split(',');
   const seen = new Set();
   const out = [];
 
-  for (const code of codes.slice(0, MAX_LANGUAGES * 2)) {
+  for (const code of codes.slice(0, MAX_LANGUAGES + 50)) {
     const lang = findLanguage(code);
     if (!lang || seen.has(lang.code)) continue;
     seen.add(lang.code);
