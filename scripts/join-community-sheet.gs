@@ -19,7 +19,7 @@
 var SHEET_ID = 'PASTE_SHEET_ID_HERE';
 var SECRET = 'PASTE_SHARED_SECRET_HERE';
 var SHEET_NAME = 'Submissions';
-var HEADERS = ['Timestamp', 'Name', 'Email', 'Reason', 'Email sent'];
+var HEADERS = ['Timestamp', 'Name', 'Email', 'Country', 'Reason', 'Email sent'];
 
 function doPost(e) {
   try {
@@ -30,6 +30,7 @@ function doPost(e) {
       new Date(),
       String(body.name || ''),
       String(body.email || ''),
+      String(body.country || ''),
       String(body.reason || ''),
       body.emailSent ? 'yes' : 'no',
     ]);

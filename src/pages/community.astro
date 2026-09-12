@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Navigation from '../components/Navigation.astro';
 import Footer from '../components/Footer.astro';
+import { AFRICAN_COUNTRIES } from '../data/african-countries.js';
 
 const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1yzj6-ui~rrekZQmavOujYh6x_~w';
 ---
@@ -55,6 +56,53 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
             <p class="mt-1.5 text-sm text-neutral-600">
               Use the same email you would like to use to join our Slack community.
             </p>
+          </div>
+
+          <div>
+            <label for="country-search" class="block text-sm font-semibold text-neutral-900 mb-1.5">Country</label>
+            <div class="relative" id="country-combo">
+              <input
+                id="country-search"
+                type="text"
+                role="combobox"
+                autocomplete="off"
+                aria-expanded="false"
+                aria-controls="country-listbox"
+                aria-autocomplete="list"
+                placeholder="Start typing to search..."
+                class="w-full pl-4 pr-10 py-3 text-base rounded-card border border-mist-200 bg-white text-ink-700 placeholder-sage focus:outline-none focus:border-forest transition-colors"
+              />
+              <input type="hidden" id="country" name="country" value="" />
+              <button
+                type="button"
+                id="country-toggle"
+                tabindex="-1"
+                aria-label="Show all countries"
+                class="absolute inset-y-0 right-0 flex items-center px-3 text-sage hover:text-forest transition-colors"
+              >
+                <svg id="country-chevron" class="w-4 h-4 transition-transform" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M5 7.5 10 12.5 15 7.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <ul
+                id="country-listbox"
+                role="listbox"
+                aria-label="African countries"
+                class="hidden absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-card border border-mist-200 bg-white shadow-lg py-1"
+              >
+                {AFRICAN_COUNTRIES.map((country) => (
+                  <li
+                    role="option"
+                    aria-selected="false"
+                    data-value={country}
+                    class="country-option px-4 py-2 text-base text-ink-700 cursor-pointer"
+                  >
+                    {country}
+                  </li>
+                ))}
+                <li id="country-empty" class="hidden px-4 py-2 text-base text-neutral-600">No matching country.</li>
+              </ul>
+            </div>
           </div>
 
           <div>
@@ -118,8 +166,16 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
       const payload = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
+        country: document.getElementById('country').value,
         reason: document.getElementById('reason').value,
       };
+
+      if (!payload.country) {
+        errorBox.textContent = 'Please select your country from the list.';
+        errorBox.classList.remove('hidden');
+        document.getElementById('country-search').focus();
+        return;
+      }
 
       const btn = form.querySelector('button[type="submit"]');
       btn.disabled = true;
@@ -148,6 +204,154 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
 
       btn.disabled = false;
       btn.textContent = 'Request to join';
+    });
+  }
+</script>
+
+<script>
+  // Searchable country combobox: filter as you type, arrow keys to move,
+  // Enter to pick, Escape to close. The hidden #country input carries the
+  // committed value, so a half-typed search string is never submitted.
+  const combo = document.getElementById('country-combo');
+
+  if (combo) {
+    const search = document.getElementById('country-search');
+    const hidden = document.getElementById('country');
+    const listbox = document.getElementById('country-listbox');
+    const emptyMsg = document.getElementById('country-empty');
+    const toggle = document.getElementById('country-toggle');
+    const chevron = document.getElementById('country-chevron');
+    const options = Array.from(listbox.querySelectorAll('.country-option'));
+
+    const ACTIVE = ['bg-mist', 'text-forest-800'];
+    let activeIndex = -1;
+
+    // Strip accents so "cote" matches "Côte d'Ivoire" and "sao" matches
+    // "São Tomé and Príncipe".
+    const normalize = (value) =>
+      value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+    const visibleOptions = () => options.filter((o) => !o.classList.contains('hidden'));
+
+    function setActive(index) {
+      const shown = visibleOptions();
+      options.forEach((o) => {
+        o.classList.remove(...ACTIVE);
+        o.setAttribute('aria-selected', 'false');
+      });
+      activeIndex = index;
+      const option = shown[index];
+      if (!option) return;
+      option.classList.add(...ACTIVE);
+      option.setAttribute('aria-selected', 'true');
+      option.scrollIntoView({ block: 'nearest' });
+    }
+
+    function open() {
+      listbox.classList.remove('hidden');
+      search.setAttribute('aria-expanded', 'true');
+      chevron.classList.add('rotate-180');
+    }
+
+    function close() {
+      listbox.classList.add('hidden');
+      search.setAttribute('aria-expanded', 'false');
+      chevron.classList.remove('rotate-180');
+      setActive(-1);
+    }
+
+    function filter(term) {
+      const q = normalize(term.trim());
+      let matches = 0;
+      options.forEach((option) => {
+        const hit = !q || normalize(option.dataset.value).includes(q);
+        option.classList.toggle('hidden', !hit);
+        if (hit) matches += 1;
+      });
+      emptyMsg.classList.toggle('hidden', matches > 0);
+      setActive(matches > 0 ? 0 : -1);
+    }
+
+    function choose(option) {
+      if (!option) return;
+      hidden.value = option.dataset.value;
+      search.value = option.dataset.value;
+      filter('');
+      close();
+    }
+
+    search.addEventListener('input', () => {
+      // Typing invalidates any previous pick until a new one is committed.
+      hidden.value = '';
+      filter(search.value);
+      open();
+    });
+
+    search.addEventListener('focus', () => {
+      filter(search.value === hidden.value ? '' : search.value);
+      open();
+    });
+
+    search.addEventListener('keydown', (e) => {
+      const shown = visibleOptions();
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (listbox.classList.contains('hidden')) open();
+        if (!shown.length) return;
+        const step = e.key === 'ArrowDown' ? 1 : -1;
+        setActive((activeIndex + step + shown.length) % shown.length);
+      } else if (e.key === 'Enter') {
+        if (!listbox.classList.contains('hidden')) {
+          e.preventDefault();
+          choose(shown[activeIndex]);
+        }
+      } else if (e.key === 'Escape') {
+        close();
+      } else if (e.key === 'Tab') {
+        close();
+      }
+    });
+
+    // Commit on blur only if the text exactly names a country; otherwise clear
+    // it, so the field never shows a country that was not actually selected.
+    search.addEventListener('blur', () => {
+      window.setTimeout(() => {
+        if (hidden.value) {
+          search.value = hidden.value;
+        } else {
+          const exact = options.find(
+            (o) => normalize(o.dataset.value) === normalize(search.value),
+          );
+          if (exact) {
+            choose(exact);
+          } else if (search.value) {
+            search.value = '';
+            filter('');
+          }
+        }
+      }, 120);
+    });
+
+    options.forEach((option) => {
+      option.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        choose(option);
+      });
+      option.addEventListener('mouseenter', () => {
+        setActive(visibleOptions().indexOf(option));
+      });
+    });
+
+    toggle.addEventListener('click', () => {
+      if (listbox.classList.contains('hidden')) {
+        search.focus();
+      } else {
+        close();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!combo.contains(e.target)) close();
     });
   }
 </script>

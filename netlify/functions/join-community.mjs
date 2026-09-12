@@ -1,3 +1,5 @@
+import { canonicalCountry } from '../../src/data/african-countries.js';
+
 const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
 const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1yzj6-ui~rrekZQmavOujYh6x_~w';
 
@@ -21,10 +23,14 @@ export default async function handler(req) {
   const name = String(body.name || '').trim().slice(0, 200);
   const email = String(body.email || '').trim().toLowerCase();
   const reason = String(body.reason || '').trim().slice(0, 2000);
+  const country = canonicalCountry(body.country);
 
   if (!name) return Response.json({ ok: false, error: 'Please enter your name.' }, { status: 400 });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json({ ok: false, error: 'Please enter a valid email address.' }, { status: 400 });
+  }
+  if (!country) {
+    return Response.json({ ok: false, error: 'Please select your country from the list.' }, { status: 400 });
   }
   if (!reason) return Response.json({ ok: false, error: 'Please tell us why you want to join.' }, { status: 400 });
 
@@ -61,7 +67,7 @@ export default async function handler(req) {
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
     console.error('Brevo send failed', res.status, detail);
-    await recordSubmission({ name, email, reason, emailSent: false });
+    await recordSubmission({ name, email, country, reason, emailSent: false });
     const payload = { ok: false, error: 'Could not send the welcome email.' };
     if (process.env.DEBUG_EMAIL === '1') {
       payload.detail = { status: res.status, body: detail.slice(0, 500) };
@@ -69,7 +75,7 @@ export default async function handler(req) {
     return Response.json(payload, { status: 502 });
   }
 
-  await recordSubmission({ name, email, reason, emailSent: true });
+  await recordSubmission({ name, email, country, reason, emailSent: true });
 
   return Response.json({ ok: true, slackInvite: SLACK_INVITE });
 }
@@ -79,7 +85,7 @@ export default async function handler(req) {
  * logged but never shown to the person joining, so a Sheets outage cannot
  * block the form.
  */
-async function recordSubmission({ name, email, reason, emailSent }) {
+async function recordSubmission({ name, email, country, reason, emailSent }) {
   const url = process.env.JOIN_SHEET_URL;
   const secret = process.env.JOIN_SHEET_SECRET;
   if (!url || !secret) {
@@ -91,7 +97,7 @@ async function recordSubmission({ name, email, reason, emailSent }) {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ secret, name, email, reason, emailSent }),
+      body: JSON.stringify({ secret, name, email, country, reason, emailSent }),
       redirect: 'follow',
     });
     const text = await res.text().catch(() => '');
