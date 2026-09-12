@@ -2,7 +2,6 @@
 import Base from '../layouts/Base.astro';
 import Navigation from '../components/Navigation.astro';
 import Footer from '../components/Footer.astro';
-import { COUNTRY_OPTIONS, OTHER_COUNTRY } from '../data/african-countries.js';
 
 const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1yzj6-ui~rrekZQmavOujYh6x_~w';
 ---
@@ -59,56 +58,43 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
           </div>
 
           <div>
-            <label for="country-search" class="block text-sm font-semibold text-neutral-900 mb-1.5">Country</label>
-            <div class="relative" id="country-combo">
+            <label for="language-search" class="block text-sm font-semibold text-neutral-900 mb-1.5">
+              Which language are you building for?
+            </label>
+            <div class="relative" id="language-combo">
               <input
-                id="country-search"
+                id="language-search"
                 type="text"
                 role="combobox"
                 autocomplete="off"
                 aria-expanded="false"
-                aria-controls="country-listbox"
+                aria-controls="language-listbox"
                 aria-autocomplete="list"
-                placeholder="Start typing to search..."
+                placeholder="Start typing a language or ISO code..."
                 class="w-full pl-4 pr-10 py-3 text-base rounded-card border border-mist-200 bg-white text-ink-700 placeholder-sage focus:outline-none focus:border-forest transition-colors"
               />
-              <input type="hidden" id="country" name="country" value="" />
+              <input type="hidden" id="language-code" name="languageCode" value="" />
               <button
                 type="button"
-                id="country-toggle"
+                id="language-toggle"
                 tabindex="-1"
-                aria-label="Show all countries"
+                aria-label="Show languages"
                 class="absolute inset-y-0 right-0 flex items-center px-3 text-sage hover:text-forest transition-colors"
               >
-                <svg id="country-chevron" class="w-4 h-4 transition-transform" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <svg id="language-chevron" class="w-4 h-4 transition-transform" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="M5 7.5 10 12.5 15 7.5" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
               </button>
               <ul
-                id="country-listbox"
+                id="language-listbox"
                 role="listbox"
-                aria-label="African countries"
-                class="hidden absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-card border border-mist-200 bg-white shadow-lg py-1"
-              >
-                {COUNTRY_OPTIONS.map((country) => (
-                  <li
-                    role="option"
-                    aria-selected="false"
-                    data-value={country}
-                    class={`country-option px-4 py-2 text-base cursor-pointer ${
-                      country === OTHER_COUNTRY
-                        ? 'text-neutral-600 border-t border-mist-200 mt-1 pt-2.5'
-                        : 'text-ink-700'
-                    }`}
-                  >
-                    {country}
-                  </li>
-                ))}
-                <li id="country-empty" class="hidden px-4 py-2 text-base text-neutral-600">
-                  No African country matches. Choose <strong class="text-ink-700">{OTHER_COUNTRY}</strong>.
-                </li>
-              </ul>
+                aria-label="African languages"
+                class="hidden absolute z-20 left-0 right-0 mt-1 max-h-72 overflow-y-auto rounded-card border border-mist-200 bg-white shadow-lg py-1"
+              ></ul>
             </div>
+            <p class="mt-1.5 text-sm text-neutral-600">
+              Pick the main one. If you work across several, choose the closest and tell us more below.
+            </p>
           </div>
 
           <div>
@@ -172,14 +158,14 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
       const payload = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
-        country: document.getElementById('country').value,
+        languageCode: document.getElementById('language-code').value,
         reason: document.getElementById('reason').value,
       };
 
-      if (!payload.country) {
-        errorBox.textContent = 'Please select your country from the list.';
+      if (!payload.languageCode) {
+        errorBox.textContent = 'Please choose a language from the list.';
         errorBox.classList.remove('hidden');
-        document.getElementById('country-search').focus();
+        document.getElementById('language-search').focus();
         return;
       }
 
@@ -215,44 +201,106 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
 </script>
 
 <script>
-  // Searchable country combobox: filter as you type, arrow keys to move,
-  // Enter to pick, Escape to close. The hidden #country input carries the
-  // committed value, so a half-typed search string is never submitted.
-  const combo = document.getElementById('country-combo');
+  import { LANGUAGES, OTHER_LANGUAGE, countryNamesFor } from '../data/languages.js';
+
+  // Searchable language combobox over afriso's 2,205 living African languages.
+  // Options are rendered on demand rather than up front: 2,205 list items in
+  // the DOM is slow to parse and pointless when only a handful are ever shown.
+  const combo = document.getElementById('language-combo');
 
   if (combo) {
-    const search = document.getElementById('country-search');
-    const hidden = document.getElementById('country');
-    const listbox = document.getElementById('country-listbox');
-    const emptyMsg = document.getElementById('country-empty');
-    const toggle = document.getElementById('country-toggle');
-    const chevron = document.getElementById('country-chevron');
-    const options = Array.from(listbox.querySelectorAll('.country-option'));
-    const otherOption = options[options.length - 1];
+    const search = document.getElementById('language-search');
+    const hiddenCode = document.getElementById('language-code');
+    const listbox = document.getElementById('language-listbox');
+    const toggle = document.getElementById('language-toggle');
+    const chevron = document.getElementById('language-chevron');
 
+    const MAX_RESULTS = 60;
     const ACTIVE = ['bg-mist', 'text-forest-800'];
+
+    let results = [];
     let activeIndex = -1;
+    let selected = null;
 
-    // Strip accents so "cote" matches "Côte d'Ivoire" and "sao" matches
-    // "São Tomé and Príncipe".
+    // Strip accents so "sango" matches "Sängö" and "ndebele" matches "isiNdebele".
     const normalize = (value) =>
-      value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-    const visibleOptions = () => options.filter((o) => !o.classList.contains('hidden'));
+    const haystack = LANGUAGES.map((l) => normalize(l.name));
+
+    function search_(term) {
+      const q = normalize(term.trim());
+      if (!q) return LANGUAGES.slice(0, MAX_RESULTS);
+
+      // Exact code match first: someone typing "twi" wants Twi, not every
+      // language whose name happens to contain those letters.
+      const starts = [];
+      const contains = [];
+      const byCode = [];
+
+      for (let i = 0; i < LANGUAGES.length; i += 1) {
+        const lang = LANGUAGES[i];
+        if (lang.code === q) {
+          byCode.push(lang);
+        } else if (haystack[i].startsWith(q)) {
+          starts.push(lang);
+        } else if (haystack[i].includes(q)) {
+          contains.push(lang);
+        }
+        if (byCode.length + starts.length + contains.length >= MAX_RESULTS * 3) break;
+      }
+
+      return [...byCode, ...starts, ...contains].slice(0, MAX_RESULTS);
+    }
+
+    function render() {
+      listbox.replaceChildren();
+
+      for (const lang of results) {
+        const li = document.createElement('li');
+        li.className = 'px-4 py-2 cursor-pointer';
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', 'false');
+        li.dataset.code = lang.code;
+
+        const name = document.createElement('span');
+        name.className = 'text-base text-ink-700';
+        name.textContent = lang.name;
+        li.append(name);
+
+        const where = lang === OTHER_LANGUAGE ? '' : countryNamesFor(lang);
+        if (where) {
+          const meta = document.createElement('span');
+          meta.className = 'block text-sm text-neutral-600 truncate';
+          meta.textContent = `${lang.code} · ${where}`;
+          li.append(meta);
+        }
+
+        li.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          choose(lang);
+        });
+        li.addEventListener('mouseenter', () => setActive(results.indexOf(lang)));
+        listbox.append(li);
+      }
+
+      setActive(results.length ? 0 : -1);
+    }
 
     function setActive(index) {
-      const shown = visibleOptions();
-      options.forEach((o) => {
-        o.classList.remove(...ACTIVE);
-        o.setAttribute('aria-selected', 'false');
+      Array.from(listbox.children).forEach((li) => {
+        li.classList.remove(...ACTIVE);
+        li.setAttribute('aria-selected', 'false');
       });
       activeIndex = index;
-      const option = shown[index];
-      if (!option) return;
-      option.classList.add(...ACTIVE);
-      option.setAttribute('aria-selected', 'true');
-      option.scrollIntoView({ block: 'nearest' });
+      const li = listbox.children[index];
+      if (!li) return;
+      li.classList.add(...ACTIVE);
+      li.setAttribute('aria-selected', 'true');
+      li.scrollIntoView({ block: 'nearest' });
     }
+
+    const isOpen = () => !listbox.classList.contains('hidden');
 
     function open() {
       listbox.classList.remove('hidden');
@@ -264,107 +312,77 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
       listbox.classList.add('hidden');
       search.setAttribute('aria-expanded', 'false');
       chevron.classList.remove('rotate-180');
-      setActive(-1);
     }
 
-    function filter(term) {
-      const q = normalize(term.trim());
-      let matches = 0;
-      options.forEach((option) => {
-        const hit = !q || normalize(option.dataset.value).includes(q);
-        option.classList.toggle('hidden', !hit);
-        if (hit) matches += 1;
-      });
-
-      // A search that matches nothing still offers the catch-all, so someone
-      // typing "France" has somewhere to land.
-      if (matches === 0 && otherOption) {
-        otherOption.classList.remove('hidden');
-        matches = 1;
-        emptyMsg.classList.remove('hidden');
-      } else {
-        emptyMsg.classList.add('hidden');
-      }
-
-      setActive(matches > 0 ? 0 : -1);
+    function refresh(term) {
+      results = search_(term);
+      // Always leave a way out for a language afriso does not cover.
+      if (!results.includes(OTHER_LANGUAGE)) results = [...results, OTHER_LANGUAGE];
+      render();
     }
 
-    function choose(option) {
-      if (!option) return;
-      hidden.value = option.dataset.value;
-      search.value = option.dataset.value;
-      filter('');
+    function choose(lang) {
+      if (!lang) return;
+      selected = lang;
+      hiddenCode.value = lang.code;
+      search.value = lang.name;
       close();
     }
 
     search.addEventListener('input', () => {
-      // Typing invalidates any previous pick until a new one is committed.
-      hidden.value = '';
-      filter(search.value);
+      // Typing invalidates the previous pick until a new one is committed.
+      selected = null;
+      hiddenCode.value = '';
+      refresh(search.value);
       open();
     });
 
     search.addEventListener('focus', () => {
-      filter(search.value === hidden.value ? '' : search.value);
+      refresh(selected ? '' : search.value);
       open();
     });
 
     search.addEventListener('keydown', (e) => {
-      const shown = visibleOptions();
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
-        if (listbox.classList.contains('hidden')) open();
-        if (!shown.length) return;
+        if (!isOpen()) { refresh(selected ? '' : search.value); open(); }
+        if (!results.length) return;
         const step = e.key === 'ArrowDown' ? 1 : -1;
-        setActive((activeIndex + step + shown.length) % shown.length);
+        setActive((activeIndex + step + results.length) % results.length);
       } else if (e.key === 'Enter') {
-        if (!listbox.classList.contains('hidden')) {
+        if (isOpen()) {
           e.preventDefault();
-          choose(shown[activeIndex]);
+          choose(results[activeIndex]);
         }
-      } else if (e.key === 'Escape') {
-        close();
-      } else if (e.key === 'Tab') {
+      } else if (e.key === 'Escape' || e.key === 'Tab') {
         close();
       }
     });
 
-    // Commit on blur only if the text exactly names a country; otherwise clear
-    // it, so the field never shows a country that was not actually selected.
+    // On blur, keep the field honest: either it shows a committed selection or
+    // it shows nothing. A half-typed search string is never left sitting there
+    // looking like an answer.
     search.addEventListener('blur', () => {
       window.setTimeout(() => {
-        if (hidden.value) {
-          search.value = hidden.value;
-        } else {
-          const exact = options.find(
-            (o) => normalize(o.dataset.value) === normalize(search.value),
-          );
-          if (exact) {
-            choose(exact);
-          } else if (search.value) {
-            search.value = '';
-            filter('');
-          }
+        if (selected) {
+          search.value = selected.name;
+          return;
+        }
+        const typed = normalize(search.value);
+        const exact = LANGUAGES.find(
+          (l, i) => haystack[i] === typed || l.code === typed,
+        );
+        if (exact) {
+          choose(exact);
+        } else if (search.value) {
+          search.value = '';
         }
       }, 120);
     });
 
-    options.forEach((option) => {
-      option.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        choose(option);
-      });
-      option.addEventListener('mouseenter', () => {
-        setActive(visibleOptions().indexOf(option));
-      });
-    });
-
     toggle.addEventListener('click', () => {
-      if (listbox.classList.contains('hidden')) {
-        search.focus();
-      } else {
-        close();
-      }
+      if (isOpen()) close();
+      else search.focus();
     });
 
     document.addEventListener('click', (e) => {
