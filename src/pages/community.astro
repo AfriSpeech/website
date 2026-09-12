@@ -1,0 +1,153 @@
+---
+import Base from '../layouts/Base.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+
+const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1yzj6-ui~rrekZQmavOujYh6x_~w';
+---
+
+<Base
+  title="Community | AfriSpeech"
+  description="Join the Africa NLP community. Connect with researchers, engineers, and linguists building foundational tools for African languages."
+>
+  <Navigation slot="nav" />
+
+  <section class="pt-24 pb-16 sm:pt-28 sm:pb-20 bg-mist">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <h1 class="text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight mb-4">Community</h1>
+        <p class="text-lg text-neutral-600 leading-relaxed max-w-2xl">
+          AfriSpeech hosts the Africa NLP community that brings together researchers, engineers,
+          linguists, and builders working to make African languages thrive in AI. Our members are
+          building the foundational tools that power Africa&rsquo;s AI. To join the community,
+          please complete the form below.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 sm:py-20 bg-paper">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-xl">
+        <form id="join-form" class="space-y-5" novalidate>
+          <div>
+            <label for="name" class="block text-sm font-semibold text-neutral-900 mb-1.5">Name</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              required
+              placeholder="Your full name"
+              class="w-full px-4 py-3 text-base rounded-card border border-mist-200 bg-white text-ink-700 placeholder-sage focus:outline-none focus:border-forest transition-colors"
+            />
+          </div>
+
+          <div>
+            <label for="email" class="block text-sm font-semibold text-neutral-900 mb-1.5">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="you@example.com"
+              class="w-full px-4 py-3 text-base rounded-card border border-mist-200 bg-white text-ink-700 placeholder-sage focus:outline-none focus:border-forest transition-colors"
+            />
+            <p class="mt-1.5 text-sm text-neutral-600">
+              Use the same email you would like to use to join our Slack community.
+            </p>
+          </div>
+
+          <div>
+            <label for="reason" class="block text-sm font-semibold text-neutral-900 mb-1.5">Why do you want to join the community?</label>
+            <textarea
+              id="reason"
+              name="reason"
+              rows="4"
+              required
+              placeholder="Tell us what you are building or working on in African languages and NLP..."
+              class="w-full px-4 py-3 text-base rounded-card border border-mist-200 bg-white text-ink-700 placeholder-sage focus:outline-none focus:border-forest transition-colors resize-y"
+            ></textarea>
+          </div>
+
+          <p id="form-error" class="hidden text-base text-red-500"></p>
+
+          <button
+            type="submit"
+            class="inline-flex items-center justify-center px-6 py-3 rounded-md bg-forest-700 text-white text-sm font-semibold hover:bg-forest-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Request to join
+          </button>
+        </form>
+
+        <div id="join-success" class="hidden p-8 rounded-card border border-mist-200 bg-white">
+          <h2 class="text-2xl font-bold text-neutral-900 mb-3">Thank you!</h2>
+          <p class="text-base text-neutral-600 leading-relaxed mb-5">
+            We have sent a welcome email to your inbox. To finish joining, click the button below
+            to open your Slack invite.
+          </p>
+          <a
+            id="join-invite"
+            href={SLACK_INVITE}
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center justify-center px-6 py-3 rounded-md bg-forest-700 text-white text-sm font-semibold hover:bg-forest-800 transition-colors"
+          >
+            Join the Africa NLP Slack
+          </a>
+          <p class="text-base text-neutral-600 leading-relaxed mt-5">
+            Once you are in, introduce yourself on the <strong class="text-ink-700">#introductions</strong>
+            channel and share a little about what you are doing in NLP.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</Base>
+
+<script>
+  const form = document.getElementById('join-form');
+  const errorBox = document.getElementById('form-error');
+  const success = document.getElementById('join-success');
+
+  if (form && success) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBox.classList.add('hidden');
+      const payload = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        reason: document.getElementById('reason').value,
+      };
+
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        const res = await fetch('/.netlify/functions/join-community', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          const invite = document.getElementById('join-invite');
+          if (invite && data.slackInvite) invite.href = data.slackInvite;
+          form.classList.add('hidden');
+          success.classList.remove('hidden');
+        } else {
+          errorBox.textContent = data.error || 'Something went wrong. Please try again.';
+          errorBox.classList.remove('hidden');
+        }
+      } catch (err) {
+        errorBox.textContent = 'Could not reach the server. Please try again.';
+        errorBox.classList.remove('hidden');
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Request to join';
+    });
+  }
+</script>
