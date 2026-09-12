@@ -61,6 +61,7 @@ export default async function handler(req) {
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
     console.error('Brevo send failed', res.status, detail);
+    await recordSubmission({ name, email, reason, emailSent: false });
     const payload = { ok: false, error: 'Could not send the welcome email.' };
     if (process.env.DEBUG_EMAIL === '1') {
       payload.detail = { status: res.status, body: detail.slice(0, 500) };
@@ -68,7 +69,38 @@ export default async function handler(req) {
     return Response.json(payload, { status: 502 });
   }
 
+  await recordSubmission({ name, email, reason, emailSent: true });
+
   return Response.json({ ok: true, slackInvite: SLACK_INVITE });
+}
+
+/**
+ * Append the submission to the Google Sheet. Best effort: a failure here is
+ * logged but never shown to the person joining, so a Sheets outage cannot
+ * block the form.
+ */
+async function recordSubmission({ name, email, reason, emailSent }) {
+  const url = process.env.JOIN_SHEET_URL;
+  const secret = process.env.JOIN_SHEET_SECRET;
+  if (!url || !secret) {
+    console.warn('Sheet logging not configured; skipping', { email });
+    return;
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ secret, name, email, reason, emailSent }),
+      redirect: 'follow',
+    });
+    const text = await res.text().catch(() => '');
+    if (!res.ok || !text.includes('"ok":true')) {
+      console.error('Sheet append failed', res.status, text.slice(0, 300));
+    }
+  } catch (e) {
+    console.error('Sheet append threw', String(e));
+  }
 }
 
 function escapeHtml(s) {
