@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Navigation from '../components/Navigation.astro';
 import Footer from '../components/Footer.astro';
-import { AFRICAN_COUNTRIES } from '../data/african-countries.js';
+import { COUNTRY_OPTIONS, OTHER_COUNTRY } from '../data/african-countries.js';
 
 const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1yzj6-ui~rrekZQmavOujYh6x_~w';
 ---
@@ -90,17 +90,23 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
                 aria-label="African countries"
                 class="hidden absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-card border border-mist-200 bg-white shadow-lg py-1"
               >
-                {AFRICAN_COUNTRIES.map((country) => (
+                {COUNTRY_OPTIONS.map((country) => (
                   <li
                     role="option"
                     aria-selected="false"
                     data-value={country}
-                    class="country-option px-4 py-2 text-base text-ink-700 cursor-pointer"
+                    class={`country-option px-4 py-2 text-base cursor-pointer ${
+                      country === OTHER_COUNTRY
+                        ? 'text-neutral-600 border-t border-mist-200 mt-1 pt-2.5'
+                        : 'text-ink-700'
+                    }`}
                   >
                     {country}
                   </li>
                 ))}
-                <li id="country-empty" class="hidden px-4 py-2 text-base text-neutral-600">No matching country.</li>
+                <li id="country-empty" class="hidden px-4 py-2 text-base text-neutral-600">
+                  No African country matches. Choose <strong class="text-ink-700">{OTHER_COUNTRY}</strong>.
+                </li>
               </ul>
             </div>
           </div>
@@ -222,6 +228,7 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
     const toggle = document.getElementById('country-toggle');
     const chevron = document.getElementById('country-chevron');
     const options = Array.from(listbox.querySelectorAll('.country-option'));
+    const otherOption = options[options.length - 1];
 
     const ACTIVE = ['bg-mist', 'text-forest-800'];
     let activeIndex = -1;
@@ -268,7 +275,17 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
         option.classList.toggle('hidden', !hit);
         if (hit) matches += 1;
       });
-      emptyMsg.classList.toggle('hidden', matches > 0);
+
+      // A search that matches nothing still offers the catch-all, so someone
+      // typing "France" has somewhere to land.
+      if (matches === 0 && otherOption) {
+        otherOption.classList.remove('hidden');
+        matches = 1;
+        emptyMsg.classList.remove('hidden');
+      } else {
+        emptyMsg.classList.add('hidden');
+      }
+
       setActive(matches > 0 ? 0 : -1);
     }
 

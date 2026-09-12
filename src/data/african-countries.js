@@ -60,12 +60,21 @@ export const AFRICAN_COUNTRIES = [
   'Zimbabwe',
 ];
 
+/**
+ * Catch-all for diaspora members and international collaborators. Pinned to
+ * the end of the list rather than sorted into it.
+ */
+export const OTHER_COUNTRY = 'Other / Outside Africa';
+
+/** Everything the country field offers, in display order. */
+export const COUNTRY_OPTIONS = [...AFRICAN_COUNTRIES, OTHER_COUNTRY];
+
 /** Case-insensitive lookup used to validate submitted values server side. */
-const BY_KEY = new Map(AFRICAN_COUNTRIES.map((c) => [c.toLowerCase(), c]));
+const BY_KEY = new Map(COUNTRY_OPTIONS.map((c) => [c.toLowerCase(), c]));
 
 /**
- * Return the canonical spelling of a country name, or null if it is not an
- * African Union member state.
+ * Return the canonical spelling of a country name, or null if it is neither an
+ * African Union member state nor the catch-all option.
  */
 export function canonicalCountry(value) {
   return BY_KEY.get(String(value || '').trim().toLowerCase()) || null;
