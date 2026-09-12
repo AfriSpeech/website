@@ -21,7 +21,8 @@ var SECRET = 'PASTE_SHARED_SECRET_HERE';
 var SHEET_NAME = 'Submissions';
 var HEADERS = [
   'Timestamp',
-  'Name',
+  'First name',
+  'Last name',
   'Email',
   'Languages',
   'Language codes',
@@ -37,7 +38,8 @@ function doPost(e) {
 
     getSheet().appendRow([
       new Date(),
-      String(body.name || ''),
+      String(body.firstName || ''),
+      String(body.lastName || ''),
       String(body.email || ''),
       String(body.languageNames || ''),
       String(body.languageCodes || ''),

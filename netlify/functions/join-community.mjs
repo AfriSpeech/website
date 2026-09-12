@@ -21,12 +21,19 @@ export default async function handler(req) {
     return Response.json({ ok: false, error: 'Could not read request body.' }, { status: 400 });
   }
 
-  const name = String(body.name || '').trim().slice(0, 200);
+  const firstName = String(body.firstName || '').trim().slice(0, 100);
+  const lastName = String(body.lastName || '').trim().slice(0, 100);
+  const name = `${firstName} ${lastName}`.trim();
   const email = String(body.email || '').trim().toLowerCase();
   const reason = String(body.reason || '').trim().slice(0, 2000);
   const languages = parseLanguages(body.languageCodes);
 
-  if (!name) return Response.json({ ok: false, error: 'Please enter your name.' }, { status: 400 });
+  if (!firstName) {
+    return Response.json({ ok: false, error: 'Please enter your first name.' }, { status: 400 });
+  }
+  if (!lastName) {
+    return Response.json({ ok: false, error: 'Please enter your last name.' }, { status: 400 });
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json({ ok: false, error: 'Please enter a valid email address.' }, { status: 400 });
   }
@@ -44,7 +51,7 @@ export default async function handler(req) {
     to: [{ email, name }],
     subject: 'Welcome to the Africa NLP community',
     htmlContent:
-      `<p>Hi ${escapeHtml(name)},</p>` +
+      `<p>Hi ${escapeHtml(firstName)},</p>` +
       `<p>Welcome! We are glad you want to join the Africa NLP community.</p>` +
       `<p>To finish joining, open the invite link below:</p>` +
       `<p><a href="${SLACK_INVITE}">Join the Africa NLP Slack workspace</a></p>` +
@@ -71,7 +78,7 @@ export default async function handler(req) {
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
     console.error('Brevo send failed', res.status, detail);
-    await recordSubmission({ name, email, languages, reason, emailSent: false });
+    await recordSubmission({ firstName, lastName, email, languages, reason, emailSent: false });
     const payload = { ok: false, error: 'Could not send the welcome email.' };
     if (process.env.DEBUG_EMAIL === '1') {
       payload.detail = { status: res.status, body: detail.slice(0, 500) };
@@ -79,7 +86,7 @@ export default async function handler(req) {
     return Response.json(payload, { status: 502 });
   }
 
-  await recordSubmission({ name, email, languages, reason, emailSent: true });
+  await recordSubmission({ firstName, lastName, email, languages, reason, emailSent: true });
 
   return Response.json({ ok: true, slackInvite: SLACK_INVITE });
 }
@@ -89,7 +96,7 @@ export default async function handler(req) {
  * logged but never shown to the person joining, so a Sheets outage cannot
  * block the form.
  */
-async function recordSubmission({ name, email, languages, reason, emailSent }) {
+async function recordSubmission({ firstName, lastName, email, languages, reason, emailSent }) {
   const url = process.env.JOIN_SHEET_URL;
   const secret = process.env.JOIN_SHEET_SECRET;
   if (!url || !secret) {
@@ -103,7 +110,8 @@ async function recordSubmission({ name, email, languages, reason, emailSent }) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         secret,
-        name,
+        firstName,
+        lastName,
         email,
         languageCodes: languages.map((l) => l.code).join('; '),
         languageNames: languages.map((l) => l.name).join('; '),
