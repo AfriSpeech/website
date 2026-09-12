@@ -6,7 +6,9 @@
  *
  * Setup:
  *   1. Create the Google Sheet, copy its id from the URL between /d/ and /edit.
- *   2. Paste that id into SHEET_ID below.
+ *   2. Paste that id into SHEET_ID below, and your shared secret into
+ *      SECRET (must match JOIN_SHEET_SECRET in Netlify). Never commit the
+ *      real secret to this file - it lives in the deployed script only.
  *   3. Run setup() once from the editor to authorize and create the tab.
  *   4. Deploy → New deployment → Web app,
  *      "Execute as: Me", "Who has access: Anyone".
@@ -15,7 +17,7 @@
  */
 
 var SHEET_ID = 'PASTE_SHEET_ID_HERE';
-var SECRET = 'HO8SimG6GGvptu6ye9wefZPzdGTqluoR-qbBo-j8Zx0';
+var SECRET = 'PASTE_SHARED_SECRET_HERE';
 var SHEET_NAME = 'Submissions';
 var HEADERS = ['Timestamp', 'Name', 'Email', 'Reason', 'Email sent'];
 
