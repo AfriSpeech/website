@@ -1,6 +1,7 @@
 import { findLanguage, countryNamesFor } from '../../src/data/languages.js';
 
 const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
+const MAX_LANGUAGES = 12;
 const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1yzj6-ui~rrekZQmavOujYh6x_~w';
 
 export default async function handler(req) {
@@ -23,14 +24,17 @@ export default async function handler(req) {
   const name = String(body.name || '').trim().slice(0, 200);
   const email = String(body.email || '').trim().toLowerCase();
   const reason = String(body.reason || '').trim().slice(0, 2000);
-  const language = findLanguage(body.languageCode);
+  const languages = parseLanguages(body.languageCodes);
 
   if (!name) return Response.json({ ok: false, error: 'Please enter your name.' }, { status: 400 });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json({ ok: false, error: 'Please enter a valid email address.' }, { status: 400 });
   }
-  if (!language) {
-    return Response.json({ ok: false, error: 'Please choose a language from the list.' }, { status: 400 });
+  if (!languages.length) {
+    return Response.json(
+      { ok: false, error: 'Please choose at least one language from the list.' },
+      { status: 400 },
+    );
   }
   if (!reason) return Response.json({ ok: false, error: 'Please tell us why you want to join.' }, { status: 400 });
 
@@ -67,7 +71,7 @@ export default async function handler(req) {
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
     console.error('Brevo send failed', res.status, detail);
-    await recordSubmission({ name, email, language, reason, emailSent: false });
+    await recordSubmission({ name, email, languages, reason, emailSent: false });
     const payload = { ok: false, error: 'Could not send the welcome email.' };
     if (process.env.DEBUG_EMAIL === '1') {
       payload.detail = { status: res.status, body: detail.slice(0, 500) };
@@ -75,7 +79,7 @@ export default async function handler(req) {
     return Response.json(payload, { status: 502 });
   }
 
-  await recordSubmission({ name, email, language, reason, emailSent: true });
+  await recordSubmission({ name, email, languages, reason, emailSent: true });
 
   return Response.json({ ok: true, slackInvite: SLACK_INVITE });
 }
@@ -85,7 +89,7 @@ export default async function handler(req) {
  * logged but never shown to the person joining, so a Sheets outage cannot
  * block the form.
  */
-async function recordSubmission({ name, email, language, reason, emailSent }) {
+async function recordSubmission({ name, email, languages, reason, emailSent }) {
   const url = process.env.JOIN_SHEET_URL;
   const secret = process.env.JOIN_SHEET_SECRET;
   if (!url || !secret) {
@@ -101,11 +105,11 @@ async function recordSubmission({ name, email, language, reason, emailSent }) {
         secret,
         name,
         email,
-        languageCode: language.code,
-        languageName: language.name,
-        // Where the language is spoken, not where the member is - derived
+        languageCodes: languages.map((l) => l.code).join('; '),
+        languageNames: languages.map((l) => l.name).join('; '),
+        // Where the languages are spoken, not where the member is - derived
         // from afriso rather than asked for.
-        countries: countryNamesFor(language),
+        countries: spokenIn(languages),
         reason,
         emailSent,
       }),
@@ -118,6 +122,38 @@ async function recordSubmission({ name, email, language, reason, emailSent }) {
   } catch (e) {
     console.error('Sheet append threw', String(e));
   }
+}
+
+/**
+ * Resolve submitted language codes to afriso entries, dropping anything
+ * unknown. Deduplicated and capped, so a crafted request cannot stuff the
+ * sheet with a 2,205-entry row.
+ */
+function parseLanguages(value) {
+  const codes = Array.isArray(value) ? value : String(value || '').split(',');
+  const seen = new Set();
+  const out = [];
+
+  for (const code of codes.slice(0, MAX_LANGUAGES * 2)) {
+    const lang = findLanguage(code);
+    if (!lang || seen.has(lang.code)) continue;
+    seen.add(lang.code);
+    out.push(lang);
+    if (out.length >= MAX_LANGUAGES) break;
+  }
+
+  return out;
+}
+
+/** Union of the countries every chosen language is spoken in. */
+function spokenIn(languages) {
+  const names = new Set();
+  for (const lang of languages) {
+    for (const country of countryNamesFor(lang).split('; ')) {
+      if (country) names.add(country);
+    }
+  }
+  return [...names].sort().join('; ');
 }
 
 function escapeHtml(s) {

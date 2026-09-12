@@ -59,27 +59,33 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
 
           <div>
             <label for="language-search" class="block text-sm font-semibold text-neutral-900 mb-1.5">
-              Which language are you building for?
+              Which languages are you building for?
             </label>
             <div class="relative" id="language-combo">
-              <input
-                id="language-search"
-                type="text"
-                role="combobox"
-                autocomplete="off"
-                aria-expanded="false"
-                aria-controls="language-listbox"
-                aria-autocomplete="list"
-                placeholder="Start typing a language or ISO code..."
-                class="w-full pl-4 pr-10 py-3 text-base rounded-card border border-mist-200 bg-white text-ink-700 placeholder-sage focus:outline-none focus:border-forest transition-colors"
-              />
-              <input type="hidden" id="language-code" name="languageCode" value="" />
+              <div
+                id="language-field"
+                class="w-full flex flex-wrap items-center gap-2 pl-2 pr-10 py-2 rounded-card border border-mist-200 bg-white focus-within:border-forest transition-colors"
+              >
+                <ul id="language-chips" class="contents" aria-label="Selected languages"></ul>
+                <input
+                  id="language-search"
+                  type="text"
+                  role="combobox"
+                  autocomplete="off"
+                  aria-expanded="false"
+                  aria-controls="language-listbox"
+                  aria-autocomplete="list"
+                  placeholder="Start typing a language or ISO code..."
+                  class="flex-1 min-w-[12rem] px-2 py-1.5 text-base bg-transparent text-ink-700 placeholder-sage focus:outline-none"
+                />
+              </div>
+              <input type="hidden" id="language-codes" name="languageCodes" value="" />
               <button
                 type="button"
                 id="language-toggle"
                 tabindex="-1"
                 aria-label="Show languages"
-                class="absolute inset-y-0 right-0 flex items-center px-3 text-sage hover:text-forest transition-colors"
+                class="absolute top-0 right-0 h-[3.25rem] flex items-center px-3 text-sage hover:text-forest transition-colors"
               >
                 <svg id="language-chevron" class="w-4 h-4 transition-transform" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="M5 7.5 10 12.5 15 7.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -89,11 +95,12 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
                 id="language-listbox"
                 role="listbox"
                 aria-label="African languages"
+                aria-multiselectable="true"
                 class="hidden absolute z-20 left-0 right-0 mt-1 max-h-72 overflow-y-auto rounded-card border border-mist-200 bg-white shadow-lg py-1"
               ></ul>
             </div>
             <p class="mt-1.5 text-sm text-neutral-600">
-              Pick the main one. If you work across several, choose the closest and tell us more below.
+              Add as many as you work on. Backspace removes the last one.
             </p>
           </div>
 
@@ -158,12 +165,12 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
       const payload = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
-        languageCode: document.getElementById('language-code').value,
+        languageCodes: document.getElementById('language-codes').value.split(',').filter(Boolean),
         reason: document.getElementById('reason').value,
       };
 
-      if (!payload.languageCode) {
-        errorBox.textContent = 'Please choose a language from the list.';
+      if (!payload.languageCodes.length) {
+        errorBox.textContent = 'Please choose at least one language from the list.';
         errorBox.classList.remove('hidden');
         document.getElementById('language-search').focus();
         return;
@@ -203,65 +210,113 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
 <script>
   import { LANGUAGES, OTHER_LANGUAGE, countryNamesFor } from '../data/languages.js';
 
-  // Searchable language combobox over afriso's 2,205 living African languages.
-  // Options are rendered on demand rather than up front: 2,205 list items in
-  // the DOM is slow to parse and pointless when only a handful are ever shown.
+  // Multi-select combobox over afriso's 2,205 living African languages.
+  // Options render on demand: 2,205 list items in the DOM is slow to parse and
+  // pointless when only a handful are ever shown.
   const combo = document.getElementById('language-combo');
 
   if (combo) {
+    const field = document.getElementById('language-field');
     const search = document.getElementById('language-search');
-    const hiddenCode = document.getElementById('language-code');
+    const chipList = document.getElementById('language-chips');
+    const hiddenCodes = document.getElementById('language-codes');
     const listbox = document.getElementById('language-listbox');
     const toggle = document.getElementById('language-toggle');
     const chevron = document.getElementById('language-chevron');
 
     const MAX_RESULTS = 60;
+    const MAX_SELECTED = 12;
     const ACTIVE = ['bg-mist', 'text-forest-800'];
 
+    const chosen = [];
     let results = [];
     let activeIndex = -1;
-    let selected = null;
 
-    // Strip accents so "sango" matches "Sängö" and "ndebele" matches "isiNdebele".
+    // Strip accents so "sango" matches "Sängö" and "cote" matches "Côte".
     const normalize = (value) =>
       String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
     const haystack = LANGUAGES.map((l) => normalize(l.name));
+    const isChosen = (lang) => chosen.some((l) => l.code === lang.code);
 
-    function search_(term) {
+    function matches(term) {
       const q = normalize(term.trim());
-      if (!q) return LANGUAGES.slice(0, MAX_RESULTS);
+      const pool = [];
 
-      // Exact code match first: someone typing "twi" wants Twi, not every
-      // language whose name happens to contain those letters.
+      if (!q) {
+        for (const lang of LANGUAGES) {
+          if (!isChosen(lang)) pool.push(lang);
+          if (pool.length >= MAX_RESULTS) break;
+        }
+        return pool;
+      }
+
+      // Exact code match first: typing "twi" wants Twi, not every language
+      // whose name happens to contain those letters.
+      const byCode = [];
       const starts = [];
       const contains = [];
-      const byCode = [];
 
       for (let i = 0; i < LANGUAGES.length; i += 1) {
         const lang = LANGUAGES[i];
-        if (lang.code === q) {
-          byCode.push(lang);
-        } else if (haystack[i].startsWith(q)) {
-          starts.push(lang);
-        } else if (haystack[i].includes(q)) {
-          contains.push(lang);
-        }
+        if (isChosen(lang)) continue;
+        if (lang.code === q) byCode.push(lang);
+        else if (haystack[i].startsWith(q)) starts.push(lang);
+        else if (haystack[i].includes(q)) contains.push(lang);
         if (byCode.length + starts.length + contains.length >= MAX_RESULTS * 3) break;
       }
 
       return [...byCode, ...starts, ...contains].slice(0, MAX_RESULTS);
     }
 
-    function render() {
+    function renderChips() {
+      chipList.replaceChildren();
+
+      for (const lang of chosen) {
+        const chip = document.createElement('li');
+        chip.className =
+          'inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-md bg-mist text-forest-800 text-sm font-semibold';
+
+        const label = document.createElement('span');
+        label.textContent = lang.name;
+        chip.append(label);
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'text-forest-800/60 hover:text-forest-800 transition-colors';
+        remove.setAttribute('aria-label', `Remove ${lang.name}`);
+        remove.textContent = '×';
+        remove.addEventListener('click', () => {
+          deselect(lang);
+          search.focus();
+        });
+        chip.append(remove);
+        chipList.append(chip);
+      }
+
+      hiddenCodes.value = chosen.map((l) => l.code).join(',');
+      search.placeholder = chosen.length
+        ? 'Add another...'
+        : 'Start typing a language or ISO code...';
+    }
+
+    function renderOptions() {
       listbox.replaceChildren();
+
+      if (chosen.length >= MAX_SELECTED) {
+        const li = document.createElement('li');
+        li.className = 'px-4 py-2 text-base text-neutral-600';
+        li.textContent = `That is ${MAX_SELECTED} languages. Tell us about the rest below.`;
+        listbox.append(li);
+        activeIndex = -1;
+        return;
+      }
 
       for (const lang of results) {
         const li = document.createElement('li');
         li.className = 'px-4 py-2 cursor-pointer';
         li.setAttribute('role', 'option');
         li.setAttribute('aria-selected', 'false');
-        li.dataset.code = lang.code;
 
         const name = document.createElement('span');
         name.className = 'text-base text-ink-700';
@@ -278,7 +333,7 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
 
         li.addEventListener('mousedown', (e) => {
           e.preventDefault();
-          choose(lang);
+          select(lang);
         });
         li.addEventListener('mouseenter', () => setActive(results.indexOf(lang)));
         listbox.append(li);
@@ -315,69 +370,78 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
     }
 
     function refresh(term) {
-      results = search_(term);
+      results = matches(term);
       // Always leave a way out for a language afriso does not cover.
-      if (!results.includes(OTHER_LANGUAGE)) results = [...results, OTHER_LANGUAGE];
-      render();
+      if (!isChosen(OTHER_LANGUAGE) && !results.includes(OTHER_LANGUAGE)) {
+        results = [...results, OTHER_LANGUAGE];
+      }
+      renderOptions();
     }
 
-    function choose(lang) {
-      if (!lang) return;
-      selected = lang;
-      hiddenCode.value = lang.code;
-      search.value = lang.name;
-      close();
+    function select(lang) {
+      if (!lang || isChosen(lang) || chosen.length >= MAX_SELECTED) return;
+      chosen.push(lang);
+      renderChips();
+      // Clear the search so the next one can be typed straight away, and keep
+      // the list open: picking several in a row is the common case here.
+      search.value = '';
+      refresh('');
+      open();
+    }
+
+    function deselect(lang) {
+      const i = chosen.findIndex((l) => l.code === lang.code);
+      if (i === -1) return;
+      chosen.splice(i, 1);
+      renderChips();
+      refresh(search.value);
     }
 
     search.addEventListener('input', () => {
-      // Typing invalidates the previous pick until a new one is committed.
-      selected = null;
-      hiddenCode.value = '';
       refresh(search.value);
       open();
     });
 
     search.addEventListener('focus', () => {
-      refresh(selected ? '' : search.value);
+      refresh(search.value);
       open();
     });
 
     search.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
-        if (!isOpen()) { refresh(selected ? '' : search.value); open(); }
+        if (!isOpen()) { refresh(search.value); open(); }
         if (!results.length) return;
         const step = e.key === 'ArrowDown' ? 1 : -1;
         setActive((activeIndex + step + results.length) % results.length);
       } else if (e.key === 'Enter') {
         if (isOpen()) {
           e.preventDefault();
-          choose(results[activeIndex]);
+          select(results[activeIndex]);
         }
+      } else if (e.key === 'Backspace' && !search.value && chosen.length) {
+        // Backspace on an empty box removes the last chip, as in any tag field.
+        e.preventDefault();
+        deselect(chosen[chosen.length - 1]);
       } else if (e.key === 'Escape' || e.key === 'Tab') {
         close();
       }
     });
 
-    // On blur, keep the field honest: either it shows a committed selection or
-    // it shows nothing. A half-typed search string is never left sitting there
-    // looking like an answer.
+    // A half-typed search string is never left sitting in the box looking like
+    // an answer; only chips count as selections.
     search.addEventListener('blur', () => {
       window.setTimeout(() => {
-        if (selected) {
-          search.value = selected.name;
-          return;
-        }
         const typed = normalize(search.value);
-        const exact = LANGUAGES.find(
-          (l, i) => haystack[i] === typed || l.code === typed,
-        );
-        if (exact) {
-          choose(exact);
-        } else if (search.value) {
-          search.value = '';
-        }
+        if (!typed) return;
+        const exact = LANGUAGES.find((l, i) => haystack[i] === typed || l.code === typed);
+        if (exact) select(exact);
+        search.value = '';
       }, 120);
+    });
+
+    field.addEventListener('mousedown', (e) => {
+      if (e.target === field || e.target === chipList) search.focus();
     });
 
     toggle.addEventListener('click', () => {
@@ -388,5 +452,7 @@ const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1y
     document.addEventListener('click', (e) => {
       if (!combo.contains(e.target)) close();
     });
+
+    renderChips();
   }
 </script>
