@@ -28,7 +28,7 @@ export default async function handler(req) {
   }
   if (!reason) return Response.json({ ok: false, error: 'Please tell us why you want to join.' }, { status: 400 });
 
-  const from = process.env.BREVO_FROM_EMAIL || 'hello@afrispeech.org';
+  const from = process.env.BREVO_FROM_EMAIL || 'community@afrispeech.org';
   const message = {
     sender: { email: from, name: 'AfriSpeech' },
     to: [{ email, name }],
@@ -61,7 +61,11 @@ export default async function handler(req) {
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
     console.error('Brevo send failed', res.status, detail);
-    return Response.json({ ok: false, error: 'Could not send the welcome email.' }, { status: 502 });
+    const payload = { ok: false, error: 'Could not send the welcome email.' };
+    if (process.env.DEBUG_EMAIL === '1') {
+      payload.detail = { status: res.status, body: detail.slice(0, 500) };
+    }
+    return Response.json(payload, { status: 502 });
   }
 
   return Response.json({ ok: true, slackInvite: SLACK_INVITE });
