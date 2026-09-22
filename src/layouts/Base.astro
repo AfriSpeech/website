@@ -56,7 +56,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
   @layer base {
     html { color-scheme: light; scroll-behavior: smooth; }
-    body { font-size: 16px; line-height: 1.65; background: #FAFAFA; }
+    body { font-size: 16px; line-height: 1.65; background: #FAFAFA; overflow-x: clip; }
     ::selection { background: rgba(82, 183, 136, 0.3); color: #0A281A; }
 
     h1, h2, h3, h4, h5, h6 {
