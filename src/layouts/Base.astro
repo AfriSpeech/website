@@ -5,14 +5,24 @@ interface Props {
   image?: string;
   /** Set false when `title` is already the complete title (e.g. the homepage). */
   appendSiteName?: boolean;
+  /**
+   * Show the Listen button. Off by default: it reads the page it is on, so a
+   * page with no prose on it would only offer a button that cannot work.
+   */
+  listen?: boolean;
 }
 
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 
-const { title, description = 'Building open-source NLP tools for African languages. Models, datasets, and demos for 1,386 African languages.', image = '/images/afrispeech-logo.png', appendSiteName = true } = Astro.props;
+const { title, listen = false, description = 'Building open-source NLP tools for African languages. Models, datasets, and demos for 1,386 African languages.', image = '/images/afrispeech-logo.png', appendSiteName = true } = Astro.props;
 const pageTitle = appendSiteName ? `${title} | AfriSpeech` : title;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+/* The widget is one file and reads the page in the reader's own browser, so it
+   needs to know only which service to talk to. Left unset it uses ours. */
+const listenEndpoint = import.meta.env.PUBLIC_LISTEN_ENDPOINT || '';
+const listenKey = import.meta.env.PUBLIC_LISTEN_API_KEY || '';
 ---
 
 <!doctype html>
@@ -39,6 +49,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta name="twitter:image" content={new URL(image, Astro.url)} />
 
     <link rel="sitemap" href="/sitemap-index.xml" />
+    {listen && (
+      <script
+        src="/afrispeech-listen.js"
+        data-endpoint={listenEndpoint}
+        data-key={listenKey}
+        defer
+      />
+    )}
   </head>
   <body class="bg-paper text-ink-500 font-sans antialiased">
     <slot name="nav" />
