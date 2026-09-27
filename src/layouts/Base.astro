@@ -20,9 +20,20 @@ const pageTitle = appendSiteName ? `${title} | AfriSpeech` : title;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
 /* The widget is one file and reads the page in the reader's own browser, so it
-   needs to know only which service to talk to. Left unset it uses ours. */
-const listenEndpoint = import.meta.env.PUBLIC_LISTEN_ENDPOINT || '';
-const listenKey = import.meta.env.PUBLIC_LISTEN_API_KEY || '';
+   needs to know only which service to talk to. There is deliberately no default
+   here: a widget pointed at the wrong host fails in the reader's browser, long
+   after the deploy, where nobody is watching. Failing the build puts the problem
+   in front of whoever is deploying instead. */
+const listenEndpoint = (import.meta.env.PUBLIC_LISTEN_ENDPOINT || '').trim();
+const listenKey = (import.meta.env.PUBLIC_LISTEN_API_KEY || '').trim();
+
+if (listen && !listenEndpoint) {
+  throw new Error(
+    'PUBLIC_LISTEN_ENDPOINT is not set, but this page enables the Listen ' +
+    `widget (${Astro.url.pathname}). Set it to the URL of the synthesis ` +
+    'service, or pass listen={false} to opt this page out.',
+  );
+}
 ---
 
 <!doctype html>

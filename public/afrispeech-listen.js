@@ -27,7 +27,10 @@
   var ORIGIN = new URL(script.src).origin;
   /* The synthesis service is a separate deployment: it spends a metered Gemini
      quota, so it lives apart from the site that embeds this widget. */
-  var SPEECH = script.dataset.endpoint || 'https://listen.afrispeech.org';
+  // No default host. Base.astro fails the build when a page enables the widget
+  // without PUBLIC_LISTEN_ENDPOINT, so an empty value here means the markup was
+  // hand-edited rather than that a default is missing.
+  var SPEECH = script.dataset.endpoint;
   /* A browser-delivered key is not a secret: anyone can read it from the page
      source. It exists to let the service tell widget traffic apart from stray
      calls, and nothing more.
@@ -55,6 +58,15 @@
 
   /* ------------------------------------------------------------- catalogue */
 
+  /* Every call to the service goes through here. With no endpoint set, fetch
+     would be handed "undefined/languages", which resolves against the reader's
+     own site and comes back as HTML, so the failure would look like a network
+     problem instead of the misconfiguration it is. */
+  function speechUrl(path) {
+    if (!SPEECH) throw new Error('no data-endpoint on the script tag');
+    return SPEECH + path;
+  }
+
   function loadCatalogue() {
     var fresh = readCache();
     if (fresh) return Promise.resolve(fresh);
@@ -62,7 +74,7 @@
        used to come from a function of our own, which meant the widget only
        worked on pages that also ran that function. Asking the service directly
        means the widget is one file you can drop onto any site. */
-    return fetch(SPEECH + '/languages', { headers: { accept: 'application/json' } })
+    return fetch(speechUrl('/languages'), { headers: { accept: 'application/json' } })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         var list = (data && data.languages) || [];
@@ -153,7 +165,7 @@
 
   /** Start a run for the words to be read, and hand back its id. */
   function startRun(text, lang) {
-    return fetch(SPEECH + '/speak', {
+    return fetch(speechUrl('/speak'), {
       method: 'POST',
       headers: speechHeaders({ 'content-type': 'application/json' }),
       body: JSON.stringify({
@@ -177,7 +189,7 @@
   function waitForRun(runId, onProgress) {
     var startedAt = Date.now();
     var delay = POLL_MIN_MS;
-    return fetch(SPEECH + '/status?run=' + encodeURIComponent(runId), { headers: speechHeaders() })
+    return fetch(speechUrl('/status?run=' + encodeURIComponent(runId)), { headers: speechHeaders() })
       .then(function (response) {
         if (!response.ok) return speechError(response, 'We lost track of that recording.');
         return response.json();
@@ -200,7 +212,7 @@
   }
 
   function fetchAudio(runId) {
-    return fetch(SPEECH + '/audio?run=' + encodeURIComponent(runId), { headers: speechHeaders() })
+    return fetch(speechUrl('/audio?run=' + encodeURIComponent(runId)), { headers: speechHeaders() })
       .then(function (response) {
         if (!response.ok) return speechError(response, 'The audio is no longer available.');
         return response.blob();
@@ -273,11 +285,14 @@
       select.innerHTML = placeholder() + list.map(function (l) {
         return '<option value="' + l.code + '">' + escapeHtml(l.name) + '</option>';
       }).join('');
-    }).catch(function () {
+    }).catch(function (err) {
       /* Catalogue unreachable: there is nothing honest to offer, and quietly
          defaulting to a language the reader did not ask for is worse than
          saying so. */
       select.innerHTML = placeholder();
+      /* Tell the reader, but keep the reason for whoever maintains the page: a
+         reader cannot act on "not configured", a site owner can. */
+      select.setAttribute('data-error', err && err.message ? err.message : 'catalogue unreachable');
       select.disabled = true;
       button.disabled = true;
       panel.hidden = false;
