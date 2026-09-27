@@ -243,10 +243,10 @@
     '.afs-listen{position:fixed;bottom:20px;z-index:2147483000;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4}',
     '.afs-listen--right{right:20px}','.afs-listen--left{left:20px}',
     '.afs-listen__row{display:flex;align-items:stretch;background:#fff;border:1px solid #D4DAD6;border-radius:999px;box-shadow:0 8px 24px rgba(16,24,40,.12);overflow:hidden}',
-    '.afs-listen__btn{appearance:none;border:0;background:#52B788;color:#081C15;font-weight:600;font-size:14px;padding:11px 18px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;flex:0 0 auto}',
+    '.afs-listen__btn{appearance:none;border:0;background:#52B788;color:#081C15;font-weight:600;font-size:14px;padding:11px 18px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap}',
     '.afs-listen__btn:hover{background:#37845F;color:#fff}','.afs-listen__btn:disabled{opacity:.65;cursor:progress}',
     '.afs-listen__btn svg{width:16px;height:16px;fill:currentColor}',
-    '.afs-listen__sel{appearance:none;-webkit-appearance:none;border:0;background:#fff url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="%233B4540" stroke-width="1.5"/></svg>\') no-repeat right 10px center;color:#3B4540;font-size:13px;padding:0 26px 0 14px;cursor:pointer;flex:1 1 auto;min-width:0;max-width:230px}',
+    '.afs-listen__sel{appearance:none;-webkit-appearance:none;border:0;border-left:1px solid #D4DAD6;background:#fff url(\'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"%3E%3Cpath d="M1 1l4 4 4-4" fill="none" stroke="%233B4540" stroke-width="1.5"/%3E%3C/svg%3E\') no-repeat right 10px center;background-size:10px 6px;color:#3B4540;font-size:13px;padding:0 26px 0 12px;cursor:pointer;max-width:150px}',
     '.afs-listen__panel{margin-top:10px;background:#fff;border:1px solid #D4DAD6;border-radius:12px;box-shadow:0 8px 24px rgba(16,24,40,.12);padding:14px;width:300px;max-width:calc(100vw - 40px)}',
     '.afs-listen__panel[hidden]{display:none}',
     '.afs-listen__audio{width:100%;margin:2px 0 8px}',
@@ -268,8 +268,8 @@
 
     root.innerHTML =
       '<div class="afs-listen__row">' +
-        '<select class="afs-listen__sel" aria-label="Language"></select>' +
         '<button class="afs-listen__btn" type="button">' + icon() + '<span class="afs-listen__text">' + cfg.label + '</span></button>' +
+        '<select class="afs-listen__sel" aria-label="Language"></select>' +
       '</div>' +
       '<div class="afs-listen__panel" hidden></div>';
 
