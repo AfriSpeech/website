@@ -1,0 +1,130 @@
+---
+import Base from '../layouts/Base.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+
+/*
+   A page for checking the Listen widget against a live service.
+
+   It does three things, all of which are worth confirming at once:
+
+     1. The widget appears and can read the page below.
+     2. The service answers a real request from this browser, which is what
+        proves the CORS preflight and the key work in practice rather than
+        in a terminal. The check below is the same shape of request the
+        widget makes, so a green line here means a working widget.
+     3. The endpoint is printed on the page, which is the one thing you need
+        when reporting a problem.
+
+   The prose is deliberately short, one passage per language, so that a run
+   finishes quickly enough to sit and wait for. It is test copy rather than
+   translated copy; the point is that audio comes back at all.
+*/
+const endpoint = (import.meta.env.PUBLIC_LISTEN_ENDPOINT || '').trim();
+const key = (import.meta.env.PUBLIC_LISTEN_API_KEY || '').trim();
+
+const passages = [
+  {
+    code: 'swh',
+    name: 'Kiswahili',
+    body: 'Habari za asubuhi. Karibu kwenye tovuti ya AfriSpeech. Tunaundoa zana za kusaidia watu kujifunza na kuwasiliana kwa lugha zao za asili. Mifano ya usemi huu inapatikana kwenye tovuti yetu.',
+  },
+  {
+    code: 'yor',
+    name: 'Yoruba',
+    body: 'E kaasan. Kaabo si oju iwe AfriSpeech. A n se awon ona ti o je ki eniyan le ko eko ati ijiroro ni awon ede iwon. Awon apojewe wa ninuu iwe wa.',
+  },
+  {
+    code: 'amh',
+    name: 'Amharic',
+    body: 'Endemin aderekk. Wedef AfriSpeech dira-ges wundeñ. Sew hutot walemiqemateñnew ena lalqew sedera yemiyeml new.\n',
+  },
+  {
+    code: 'hau',
+    name: 'Hausa',
+    body: 'Barka da safiya. Ku zo a shafi AfriSpeech. Muna gina kayan aiki da za su iya ba mutane damar koyi da magana da su. Za a same wakkan nan a shafin mu.',
+  },
+];
+---
+
+<Base title="Listen test" listen noindex description="A test page for the AfriSpeech Listen widget.">
+  <Navigation slot="nav" />
+
+  <section class="pt-24 pb-10 sm:pt-28 bg-mist">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <h1 class="text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight mb-4">Listen test page</h1>
+        <p class="text-lg text-neutral-600 leading-relaxed">
+          The button in the corner is the real widget, wired to the real service. Press it
+          and pick a language.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-12 sm:py-16 bg-paper">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <div class="p-6 rounded-card border border-mist-200 bg-paper mb-12">
+          <h2 class="text-sm font-bold text-neutral-900 uppercase tracking-wide mb-3">Service</h2>
+          <p class="text-sm font-mono text-sage break-all mb-4">{endpoint}</p>
+          <p id="listen-check" class="text-sm text-sage">Checking the service from this browser&hellip;</p>
+          <p class="text-sm text-neutral-500 mt-4">
+            The line above is a request from your browser, using the same key the widget
+            uses. If it turns green, the widget has what it needs.
+          </p>
+        </div>
+
+        {
+          passages.map((p) => (
+            <article class="mb-10">
+              <h2 class="text-xl font-bold text-neutral-900 mb-3">
+                {p.name} <span class="text-sm font-normal text-sage">({p.code})</span>
+              </h2>
+              <p class="text-base text-sage leading-relaxed">{p.body}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</Base>
+
+<script define:vars={{ endpoint, key }}>
+  // The same shape of request the widget makes, run once on load so a failure
+  // is visible here rather than only after someone presses the button.
+  //
+  // Note the async function rather than a top-level await: a define:vars
+  // script is emitted as a classic script wrapped in an IIFE, not as a
+  // module, so `await` at the top level of it is a parse error and the whole
+  // check silently never runs.
+  async function check() {
+    const el = document.getElementById('listen-check');
+    const report = (ok, message) => {
+      el.textContent = message;
+      el.classList.toggle('text-forest-800', ok);
+      el.classList.toggle('text-red-700', !ok);
+    };
+
+    try {
+      const res = await fetch(endpoint + '/languages', {
+        headers: { 'x-listen-key': key },
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + res.statusText);
+      const body = await res.json();
+      const count = Array.isArray(body.languages) ? body.languages.length : null;
+      report(
+        true,
+        count === null
+          ? 'Service reachable from this browser.'
+          : 'Service reachable from this browser. ' + count + ' languages available.',
+      );
+    } catch (err) {
+      report(false, 'Could not reach the service: ' + err.message);
+    }
+  }
+
+  check();
+</script>
