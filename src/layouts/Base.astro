@@ -29,6 +29,16 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const listenEndpoint = (import.meta.env.PUBLIC_LISTEN_ENDPOINT || '').trim();
 const listenKey = (import.meta.env.PUBLIC_LISTEN_API_KEY || '').trim();
 
+/* The widget itself lives in the AfriSpeech/web-tts repository now, not here,
+   and is served straight off its `main` branch through jsDelivr rather than
+   copied into this site's `public/`. That means a push to web-tts is what a
+   reader gets here too, once jsDelivr's cache catches up (observed anywhere
+   from under a minute to a couple of minutes after a purge; longer if nobody
+   purges and it is just left to expire), with nothing to keep in sync on this
+   side. Pin this to a commit (`@<sha>` in place of `@main`) instead if a
+   specific, unambiguous version matters more than always being current. */
+const listenWidgetUrl = 'https://cdn.jsdelivr.net/gh/AfriSpeech/web-tts@main/public/afrispeech-listen.js';
+
 if (listen && !listenEndpoint) {
   throw new Error(
     'PUBLIC_LISTEN_ENDPOINT is not set, but this page enables the Listen ' +
@@ -65,7 +75,7 @@ if (listen && !listenEndpoint) {
     <link rel="sitemap" href="/sitemap-index.xml" />
     {listen && (
       <script
-        src="/afrispeech-listen.js"
+        src={listenWidgetUrl}
         data-endpoint={listenEndpoint}
         data-key={listenKey}
         defer
