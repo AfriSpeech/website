@@ -5,7 +5,7 @@ const MAX_LANGUAGES = 600;
 const SLACK_INVITE = 'https://join.slack.com/t/africanlp/shared_invite/zt-488w1yzj6-ui~rrekZQmavOujYh6x_~w';
 
 export default async function handler(req) {
-  const key = process.env.BREVO_API_KEY;
+  const key = process.env.BREVO_API_KEY || process.env.BRVO_API_KEY;
   if (!key) {
     return Response.json({ ok: false, error: 'Email service is not configured yet.' }, { status: 500 });
   }
@@ -98,7 +98,7 @@ export default async function handler(req) {
  */
 async function recordSubmission({ firstName, lastName, email, languages, reason, emailSent }) {
   const url = process.env.JOIN_SHEET_URL;
-  const secret = process.env.JOIN_SHEET_SECRET;
+  const secret = process.env.JOIN_SHEET_SECRET || process.env.JOIN_SHEET_SECCRET;
   if (!url || !secret) {
     console.warn('Sheet logging not configured; skipping', { email });
     return;

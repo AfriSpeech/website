@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "astro dev",
-    "start": "astro dev",
+    "start": "node server.mjs",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "node server.mjs",
     "refresh-traffic": "node --env-file=.env scripts/refresh-traffic-fallback.mjs"
   },
   "dependencies": {
@@ -17,6 +17,8 @@
     "@fontsource-variable/geist-mono": "^5.3.0",
     "@netlify/blobs": "^11.0.3",
     "astro": "^5.13.0",
+    "compression": "^1.8.2",
+    "express": "^5.2.1",
     "tailwindcss": "^3.4.17"
   }
 }
