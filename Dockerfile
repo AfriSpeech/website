@@ -21,6 +21,8 @@ FROM node:22-alpine AS runner
 
 WORKDIR /app
 
+RUN apk add --no-cache curl
+
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV DATA_DIR=/app/data
@@ -42,6 +44,6 @@ RUN mkdir -p /app/data/traffic
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1
+  CMD curl -f http://127.0.0.1:3000/health || exit 1
 
 CMD ["node", "server.mjs"]
