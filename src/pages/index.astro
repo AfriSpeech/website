@@ -17,28 +17,33 @@ const featured = models.find(m => m.featured) || models[0];
 
   <!-- Hero -->
   <section class="relative bg-paper overflow-hidden">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 sm:pt-40 sm:pb-28 relative z-10">
-      <div class="max-w-3xl">
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-neutral-900 tracking-tight leading-[1.05] mb-6">
-          Every African language deserves representation in AI
-        </h1>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 sm:pt-36 sm:pb-24 lg:pt-36 lg:pb-28 relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-12 items-center">
+        <div class="lg:col-span-7 xl:col-span-7 max-w-2xl">
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-neutral-900 tracking-tight leading-[1.05] mb-6">
+            Every African language deserves representation in AI
+          </h1>
 
-        <p class="text-lg sm:text-xl text-neutral-600 max-w-2xl mb-10 leading-relaxed">
-          Open-source NLP models, datasets, and tools built for African languages.
-          Try our demos right here, or dive into our research.
-        </p>
+          <p class="text-lg sm:text-xl text-neutral-600 max-w-2xl mb-10 leading-relaxed">
+            Open-source NLP models, datasets, and tools built for African languages.
+            Try our demos right here, or dive into our research.
+          </p>
 
-        <div class="flex flex-col sm:flex-row items-start gap-3">
-          <a href="/models" class="inline-flex items-center px-5 py-2.5 rounded-md bg-forest-700 text-white text-sm font-semibold hover:bg-forest-800 transition-colors">
-            Try Live Demos
-          </a>
-          <a href="/datasets" class="inline-flex items-center px-5 py-2.5 rounded-md border border-neutral-300 text-neutral-700 text-sm font-semibold hover:bg-neutral-100 transition-colors">
-            Explore Datasets
-          </a>
+          <div class="flex flex-col sm:flex-row items-start gap-3">
+            <a href="/models" class="inline-flex items-center px-5 py-2.5 rounded-md bg-forest-700 text-white text-sm font-semibold hover:bg-forest-800 transition-colors">
+              Try Live Demos
+            </a>
+            <a href="/datasets" class="inline-flex items-center px-5 py-2.5 rounded-md border border-neutral-300 text-neutral-700 text-sm font-semibold hover:bg-neutral-100 transition-colors">
+              Explore Datasets
+            </a>
+          </div>
+        </div>
+
+        <div class="hidden lg:flex lg:col-span-5 xl:col-span-5 items-center justify-center lg:justify-end">
+          <HeroWave />
         </div>
       </div>
     </div>
-    <HeroWave />
   </section>
 
   <!-- Stats -->

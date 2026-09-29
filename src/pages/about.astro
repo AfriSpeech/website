@@ -20,8 +20,8 @@ import Footer from '../components/Footer.astro';
 
   <section class="py-16 sm:py-20 bg-paper">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,42rem)_1fr] gap-12">
-        <div class="max-w-3xl">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        <div class="lg:col-span-7 xl:col-span-7 max-w-2xl">
           <h2 class="text-2xl font-bold text-neutral-900 mb-6">Our Mission</h2>
         <p class="text-base text-sage leading-relaxed mb-8">
           There are over 2,000 African languages, yet very few have been included in modern NLP research and tooling.
@@ -67,10 +67,10 @@ import Footer from '../components/Footer.astro';
           </a>
         </div>
       </div>
-      <div class="hidden xl:flex items-start justify-center" aria-hidden="true">
-        <div class="flex items-center gap-2 pointer-events-none select-none">
-          <img src="/images/afrispeech-map.png" alt="" width="196" height="191" class="h-40 w-auto" />
-          <svg width="320" height="320" viewBox="0 0 220 220" fill="none">
+      <div class="hidden lg:flex lg:col-span-5 xl:col-span-5 sticky top-28 items-center justify-center lg:justify-end" aria-hidden="true">
+        <div class="flex items-center gap-2 sm:gap-3 pointer-events-none select-none max-w-full">
+          <img src="/images/afrispeech-map.png" alt="" width="196" height="191" class="h-28 sm:h-32 md:h-36 lg:h-32 xl:h-40 w-auto flex-shrink-0 object-contain" />
+          <svg class="w-44 sm:w-52 md:w-60 lg:w-52 xl:w-64 h-auto aspect-square flex-shrink-0" viewBox="0 0 220 220" fill="none">
             <path class="about-wave" d="M40 60 Q120 100 40 140" stroke="#2D6A4F" stroke-width="4" stroke-linecap="round" style="--delay:0s" />
             <path class="about-wave" d="M40 40 Q150 100 40 160" stroke="#52B788" stroke-width="4" stroke-linecap="round" style="--delay:0.86s" />
             <path class="about-wave" d="M40 20 Q180 100 40 180" stroke="#74C69D" stroke-width="4" stroke-linecap="round" style="--delay:1.72s" />

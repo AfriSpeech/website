@@ -10,11 +10,21 @@ const waves = [
 ---
 
 <div
-  class="hidden xl:flex absolute top-1/2 right-0 -translate-y-1/2 items-center gap-2 pointer-events-none select-none"
+  class="flex items-center gap-2 sm:gap-3 pointer-events-none select-none max-w-full"
   aria-hidden="true"
 >
-  <img src="/images/afrispeech-map.png" alt="" width="196" height="191" class="h-36 w-auto sm:h-44" />
-  <svg width="360" height="360" viewBox="0 0 220 220" fill="none">
+  <img
+    src="/images/afrispeech-map.png"
+    alt=""
+    width="196"
+    height="191"
+    class="h-28 sm:h-32 md:h-36 lg:h-32 xl:h-44 w-auto flex-shrink-0 object-contain"
+  />
+  <svg
+    class="w-44 sm:w-52 md:w-60 lg:w-52 xl:w-72 h-auto aspect-square flex-shrink-0"
+    viewBox="0 0 220 220"
+    fill="none"
+  >
     {waves.map(w => (
       <path
         class="hero-wave"
