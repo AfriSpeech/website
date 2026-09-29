@@ -39,7 +39,7 @@ COPY --from=builder /app/src/lib ./src/lib
 COPY --from=builder /app/server.mjs ./server.mjs
 
 # Prepare persistent storage directory
-RUN mkdir -p /app/data/traffic
+RUN mkdir -p /app/data/traffic /app/data/hf
 
 EXPOSE 3000
 

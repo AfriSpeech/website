@@ -273,23 +273,33 @@ const featured = models.find(m => m.featured) || models[0];
 
 <script>
   (async () => {
+    const set = (sel, n) => {
+      const el = document.querySelector(sel);
+      if (el && typeof n === 'number' && !isNaN(n)) el.textContent = n.toLocaleString();
+    };
+
     try {
-      const [ds, ms] = await Promise.all([
-        fetch('https://huggingface.co/api/datasets?author=AfriSpeech&limit=50').then(r => r.json()),
-        fetch('https://huggingface.co/api/models?author=AfriSpeech&limit=50').then(r => r.json()),
-      ]);
-      const dsTotal = ds.reduce((s, d) => s + (d.downloads || 0), 0);
-      const msTotal = ms.reduce((s, m) => s + (m.downloads || 0), 0);
-      const set = (sel, n) => {
-        const el = document.querySelector(sel);
-        if (el) el.textContent = n.toLocaleString();
-      };
-      set('[data-dataset-downloads]', dsTotal);
-      set('[data-model-downloads]', msTotal);
-      try {
-        const gh = await fetch('/.netlify/functions/github-traffic').then(r => r.json());
-        if (gh.configured && gh.clones > 0) set('[data-github-clones]', gh.clones);
-      } catch (e) {}
+      // 1. Fetch server-tracked cumulative HF stats
+      const hf = await fetch('/api/hf-stats').then(r => r.json()).catch(() => null);
+      if (hf && hf.models && hf.datasets) {
+        set('[data-dataset-downloads]', hf.datasets.cumulative || hf.datasets.rolling30d);
+        set('[data-model-downloads]', hf.models.cumulative || hf.models.rolling30d);
+      } else {
+        // Fallback: direct HuggingFace fetch with cumulative baseline floors
+        const [ds, ms] = await Promise.all([
+          fetch('https://huggingface.co/api/datasets?author=AfriSpeech&limit=50').then(r => r.json()).catch(() => []),
+          fetch('https://huggingface.co/api/models?author=AfriSpeech&limit=50').then(r => r.json()).catch(() => []),
+        ]);
+        const dsTotal = Math.max(3088, ds.reduce((s, d) => s + (d.downloads || 0), 0));
+        const msTotal = Math.max(1226, ms.reduce((s, m) => s + (m.downloads || 0), 0));
+        set('[data-dataset-downloads]', dsTotal);
+        set('[data-model-downloads]', msTotal);
+      }
+    } catch (e) {}
+
+    try {
+      const gh = await fetch('/.netlify/functions/github-traffic').then(r => r.json());
+      if (gh.configured && gh.clones > 0) set('[data-github-clones]', gh.clones);
     } catch (e) {}
   })();
 </script>

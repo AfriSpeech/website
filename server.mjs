@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import joinCommunityHandler from './netlify/functions/join-community.mjs';
 import { getTrafficData, runTrafficSnapshot, startTrafficScheduler } from './src/lib/traffic-service.mjs';
+import { getHfStats, startHfScheduler } from './src/lib/hf-service.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,6 +75,19 @@ const handleGithubTraffic = async (req, res) => {
 app.get('/.netlify/functions/github-traffic', handleGithubTraffic);
 app.get('/api/github-traffic', handleGithubTraffic);
 
+// API: Hugging Face cumulative stats
+app.get('/api/hf-stats', async (req, res) => {
+  try {
+    const force = req.query.refresh === '1';
+    const data = await getHfStats({ forceRefresh: force });
+    res.setHeader('Cache-Control', 'public, max-age=600');
+    res.json(data);
+  } catch (err) {
+    console.error('[server] hf-stats error:', err);
+    res.status(500).json({ error: 'hf stats unavailable' });
+  }
+});
+
 // API: Manual trigger for traffic snapshot (optional token check)
 app.post(['/api/traffic-snapshot', '/.netlify/functions/traffic-snapshot'], async (req, res) => {
   const secret = process.env.CRON_SECRET;
@@ -119,6 +133,7 @@ app.use((req, res) => {
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`[server] AfriSpeech website running on port ${PORT}`);
   startTrafficScheduler();
+  startHfScheduler();
 });
 
 // Graceful shutdown
