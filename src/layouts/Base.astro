@@ -21,31 +21,13 @@ const { title, listen = false, noindex = false, description = 'Building open-sou
 const pageTitle = appendSiteName ? `${title} | AfriSpeech` : title;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
-/* The widget is one file and reads the page in the reader's own browser, so it
-   needs to know only which service to talk to. There is deliberately no default
-   here: a widget pointed at the wrong host fails in the reader's browser, long
-   after the deploy, where nobody is watching. Failing the build puts the problem
-   in front of whoever is deploying instead. */
+// Optional overrides. If unset, the widget automatically uses its built-in default endpoint and key.
 const listenEndpoint = (import.meta.env.PUBLIC_LISTEN_ENDPOINT || '').trim();
 const listenKey = (import.meta.env.PUBLIC_LISTEN_API_KEY || '').trim();
 
 /* The widget itself lives in the AfriSpeech/afrilisten repository now, not here,
-   and is served straight off its `main` branch through jsDelivr rather than
-   copied into this site's `public/`. That means a push to afrilisten is what a
-   reader gets here too, once jsDelivr's cache catches up (observed anywhere
-   from under a minute to a couple of minutes after a purge; longer if nobody
-   purges and it is just left to expire), with nothing to keep in sync on this
-   side. Pin this to a commit (`@<sha>` in place of `@main`) instead if a
-   specific, unambiguous version matters more than always being current. */
+   and is served straight off its `main` branch through jsDelivr. */
 const listenWidgetUrl = 'https://cdn.jsdelivr.net/gh/AfriSpeech/afrilisten@main/public/afrilisten.js';
-
-if (listen && !listenEndpoint) {
-  throw new Error(
-    'PUBLIC_LISTEN_ENDPOINT is not set, but this page enables the Listen ' +
-    `widget (${Astro.url.pathname}). Set it to the URL of the synthesis ` +
-    'service, or pass listen={false} to opt this page out.',
-  );
-}
 ---
 
 <!doctype html>
@@ -76,8 +58,8 @@ if (listen && !listenEndpoint) {
     {listen && (
       <script
         src={listenWidgetUrl}
-        data-endpoint={listenEndpoint}
-        data-key={listenKey}
+        {...(listenEndpoint ? { 'data-endpoint': listenEndpoint } : {})}
+        {...(listenKey ? { 'data-key': listenKey } : {})}
         defer
       />
     )}
